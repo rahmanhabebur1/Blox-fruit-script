@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1/4 - HoHo Style Bring Mob Update)
+-- MD GAMER SCRIPT (Part 1/4 - Fixed Bring Mob & Stable Server Stack)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -372,13 +372,13 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
         callback(state)
     end)
 end
--- MD GAMER SCRIPT (Part 2/4 - HoHo Style Bring Mob & Farm Systems)
+-- MD GAMER SCRIPT (Part 2/4 - Fixed Bring Mob Logic & Hit Fix)
 createToggleRow(FarmContainer, "Auto Level Farm", false, function(enabled)
     autoFarmEnabled = enabled
     if enabled then sendNotification("⚔️ Auto Farm", "Level Farm Activated!") end
 end)
 
--- HOHO STYLE BRING MOB: Fixed anchor point near player (doesn't shake/move with player body)
+-- Fixed Bring Mob: Stays at fixed target point without shaking/following body, keeping server damage valid
 local cachedBringPosition = nil
 
 createToggleRow(FarmContainer, "Bring Mob (300m)", false, function(enabled)
@@ -387,7 +387,7 @@ createToggleRow(FarmContainer, "Bring Mob (300m)", false, function(enabled)
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             cachedBringPosition = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -4)
         end
-        sendNotification("📌 Bring Mob", "HoHo Style Enabled (Fixed Cluster)")
+        sendNotification("📌 Bring Mob", "Stable Fixed Cluster Enabled")
     else
         cachedBringPosition = nil
     end
@@ -496,14 +496,14 @@ task.spawn(function()
     end
 end)
 
--- HOHO STYLE BRING MOB EXECUTION (Stable stack, no movement sync with player body)
+-- STABLE BRING MOB EXECUTION (Locks mob position properly to allow server hits)
 task.spawn(function()
     while task.wait(0.15) do
         if bringMobEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             pcall(function()
                 local hrp = LocalPlayer.Character.HumanoidRootPart
-                if not cachedBringPosition or (hrp.Position - cachedBringPosition.Position).Magnitude > 25 then
-                    cachedBringPosition = hrp.CFrame * CFrame.new(0, 0, -4)
+                if not cachedBringPosition or (hrp.Position - cachedBringPosition.Position).Magnitude > 20 then
+                    cachedBringPosition = hrp.CFrame * CFrame.new(0, 0, -3.5)
                 end
 
                 local enemiesFolder = Workspace:FindFirstChild("Enemies")
@@ -524,7 +524,6 @@ task.spawn(function()
                                 for _, part in ipairs(enemy:GetChildren()) do
                                     if part:IsA("BasePart") then
                                         part.CanCollide = false
-                                        part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                                     end
                                 end
                             end
@@ -1037,4 +1036,4 @@ Workspace.ChildAdded:Connect(function()
     checkFruitsForNotification(true)
 end)
 
-sendNotification("🎮 MD GAMER SCRIPT", "Successfully Loaded with HoHo Bring Mob!")
+sendNotification("🎮 MD GAMER SCRIPT", "Successfully Loaded with Fixed Bring Mob!")
