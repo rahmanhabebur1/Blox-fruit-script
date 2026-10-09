@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Blox Fruit Ultimate Helper UI)
+-- MD GAMER SCRIPT (Blox Fruit Helper Script with Safe High Altitude Fly)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -341,6 +341,69 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
     end)
 end
 ---------------------------------------------------------
+-- ORIGINAL REAL WORKING FPS BOOST
+---------------------------------------------------------
+
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+local function removeVFX(v)
+    if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") then
+        v.Enabled = false
+    elseif v:IsA("Beam") or v:IsA("Trail") then
+        v.Enabled = false
+    end
+end
+
+local function processFPSBoost()
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.FogStart = 9e9
+
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("PostEffect") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("SunRaysEffect") then
+            obj.Enabled = false
+        end
+    end
+
+    local cam = Workspace.CurrentCamera
+    if cam then
+        for _, obj in ipairs(cam:GetChildren()) do
+            if obj:IsA("PostEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("BlurEffect") then
+                obj.Enabled = false
+            end
+        end
+    end
+
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        removeVFX(v)
+        if v:IsA("BasePart") then
+            v.CastShadow = false
+        end
+    end
+end
+
+task.spawn(function()
+    while true do
+        task.wait(1)
+        if fpsBoostEnabled then
+            pcall(processFPSBoost)
+        end
+    end
+end)
+
+Workspace.DescendantAdded:Connect(function(v)
+    if fpsBoostEnabled then
+        task.wait()
+        removeVFX(v)
+        if v:IsA("BasePart") then
+            v.CastShadow = false
+        end
+    end
+end)
+
+---------------------------------------------------------
 -- AIMBOT ENGINE
 ---------------------------------------------------------
 
@@ -526,7 +589,7 @@ fovBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- FLY TELEPORT FUNCTIONALITY (250 SPEED)
+-- SAFE FLY TELEPORT FUNCTIONALITY (UPDATED WITH HEIGHT FIX)
 ---------------------------------------------------------
 
 local currentFlyTween = nil
@@ -536,7 +599,11 @@ local function flyTo(targetCFrame)
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
     local hrp = char.HumanoidRootPart
-    local distance = (hrp.Position - targetCFrame.Position).Magnitude
+    
+    -- Safe High Altitude Position (ওপরে ওড়ার সময় পানি থেকে দূরে রাখার জন্য Y অক্ষে +150 স্টাড যোগ করা হয়েছে)
+    local safeTargetCFrame = targetCFrame + Vector3.new(0, 150, 0)
+    
+    local distance = (hrp.Position - safeTargetCFrame.Position).Magnitude
     local flySpeed = 250
     local duration = distance / flySpeed
 
@@ -544,9 +611,16 @@ local function flyTo(targetCFrame)
 
     hrp.Velocity = Vector3.zero
     local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
-    currentFlyTween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
+    currentFlyTween = TweenService:Create(hrp, tweenInfo, {CFrame = safeTargetCFrame})
     currentFlyTween:Play()
-    return currentFlyTween
+    
+    currentFlyTween.Completed:Wait()
+    
+    -- একদম গন্তব্যে পৌঁছানোর পর আস্তে করে সঠিক উচ্চতায় নামিয়ে দেওয়া
+    local finalTween = TweenService:Create(hrp, TweenInfo.new(0.8, Enum.EasingStyle.Linear), {CFrame = targetCFrame + Vector3.new(0, 5, 0)})
+    finalTween:Play()
+    
+    return finalTween
 end
 
 ---------------------------------------------------------
@@ -613,61 +687,12 @@ for islandName, pos in pairs(currentSeaIslands) do
     btnCorner.Parent = btn
 
     btn.MouseButton1Click:Connect(function()
-        sendNotification("🏝️ Flying...", islandName)
+        sendNotification("🏝️ Flying Safely...", islandName)
         flyTo(CFrame.new(pos))
     end)
 end
 
 IslandContainer.CanvasSize = UDim2.new(0, 0, 0, totalIslands * 38)
-
----------------------------------------------------------
--- REAL WORKING FPS BOOST
----------------------------------------------------------
-
-ToggleButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
-
-local function removeVFX(v)
-    if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") or v:IsA("Beam") or v:IsA("Trail") then
-        v.Enabled = false
-    end
-end
-
-local function processFPSBoost()
-    Lighting.GlobalShadows = false
-    Lighting.FogEnd = 9e9
-    Lighting.FogStart = 9e9
-
-    for _, obj in ipairs(Lighting:GetChildren()) do
-        if obj:IsA("PostEffect") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("SunRaysEffect") then
-            obj.Enabled = false
-        end
-    end
-
-    local cam = Workspace.CurrentCamera
-    if cam then
-        for _, obj in ipairs(cam:GetChildren()) do
-            if obj:IsA("PostEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("BlurEffect") then
-                obj.Enabled = false
-            end
-        end
-    end
-
-    for _, v in ipairs(Workspace:GetDescendants()) do
-        removeVFX(v)
-        if v:IsA("BasePart") then
-            v.CastShadow = false
-        end
-    end
-end
-
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if fpsBoostEnabled then pcall(processFPSBoost) end
-    end
-end)
 
 ---------------------------------------------------------
 -- ESP & HELPER FUNCTIONS
@@ -807,7 +832,7 @@ createToggleRow(MainContainer, "FPS Boost", false, function(enabled)
     fpsBoostEnabled = enabled
     if enabled then
         pcall(processFPSBoost)
-        sendNotification("🚀 FPS Boost", "Shadows & VFX Removed!")
+        sendNotification("🚀 FPS Boost", "Shadows, Fog & Attack VFX Removed!")
     end
 end)
 
