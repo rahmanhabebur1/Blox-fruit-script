@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Blox Fruit Helper Script with Safe High Altitude Fly)
+-- MD GAMER SCRIPT (Blox Fruit Helper Script with Original FPS Boost)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -341,7 +341,7 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
     end)
 end
 ---------------------------------------------------------
--- ORIGINAL REAL WORKING FPS BOOST
+-- ORIGINAL REAL WORKING FPS BOOST (SHADOW, FOG & VFX REMOVER)
 ---------------------------------------------------------
 
 ToggleButton.MouseButton1Click:Connect(function()
@@ -589,7 +589,7 @@ fovBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- SAFE FLY TELEPORT FUNCTIONALITY (UPDATED WITH HEIGHT FIX)
+-- SAFE FLY TELEPORT FUNCTIONALITY
 ---------------------------------------------------------
 
 local currentFlyTween = nil
@@ -599,8 +599,6 @@ local function flyTo(targetCFrame)
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
     local hrp = char.HumanoidRootPart
-    
-    -- Safe High Altitude Position (ওপরে ওড়ার সময় পানি থেকে দূরে রাখার জন্য Y অক্ষে +150 স্টাড যোগ করা হয়েছে)
     local safeTargetCFrame = targetCFrame + Vector3.new(0, 150, 0)
     
     local distance = (hrp.Position - safeTargetCFrame.Position).Magnitude
@@ -616,7 +614,6 @@ local function flyTo(targetCFrame)
     
     currentFlyTween.Completed:Wait()
     
-    -- একদম গন্তব্যে পৌঁছানোর পর আস্তে করে সঠিক উচ্চতায় নামিয়ে দেওয়া
     local finalTween = TweenService:Create(hrp, TweenInfo.new(0.8, Enum.EasingStyle.Linear), {CFrame = targetCFrame + Vector3.new(0, 5, 0)})
     finalTween:Play()
     
@@ -862,4 +859,4 @@ Workspace.ChildAdded:Connect(function()
     checkFruitsForNotification(true)
 end)
 
-sendNotification("🎮 MD GAMER SCRIPT", "Successfully Loaded!")
+sendNotification("😎 MD GAMER SCRIPT 😎", "Successfully Loaded!")
