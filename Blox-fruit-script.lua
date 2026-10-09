@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Blox Fruit Helper Script with Sky Blue Marine ESP)
+-- MD GAMER SCRIPT (Part 1/3)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -6,18 +6,17 @@ local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- Global States
 local autoCollectEnabled = false
 local fruitESPEnabled = false
 local playerESPEnabled = false
 local fpsBoostEnabled = false
 
--- Aimbot States
 local aimbotEnabled = false
-local aimTargetMode = "Players" -- "Players" or "NPCs"
+local aimTargetMode = "Players"
 local targetLowestHP = true
 local fovRadius = 150
 local showFOV = false
@@ -26,7 +25,6 @@ local fruitESPObjects = {}
 local playerESPObjects = {}
 local notifiedFruits = {}
 
--- FOV Circle Creation
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 1.5
 FOVCircle.Color = Color3.fromRGB(0, 255, 200)
@@ -36,7 +34,6 @@ FOVCircle.NumSides = 30
 FOVCircle.Radius = fovRadius
 FOVCircle.Visible = false
 
--- Main GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MD_GAMER_SCRIPT_UI"
 ScreenGui.ResetOnSpawn = false
@@ -50,7 +47,6 @@ else
     ScreenGui.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- Notification System
 local NotificationHolder = Instance.new("Frame")
 NotificationHolder.Name = "NotificationHolder"
 NotificationHolder.Size = UDim2.new(0, 180, 0, 200)
@@ -112,7 +108,6 @@ local function sendNotification(title, text)
     end)
 end
 
--- Floating Open/Close Icon
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "OpenButton"
 ToggleButton.Size = UDim2.new(0, 45, 0, 45)
@@ -138,10 +133,9 @@ BtnIcon.Text = "🎮"
 BtnIcon.TextSize = 22
 BtnIcon.Parent = ToggleButton
 
--- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 430, 0, 270)
+MainFrame.Size = UDim2.new(0, 440, 0, 280)
 MainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 24)
 MainFrame.Visible = false
@@ -158,7 +152,6 @@ MainStroke.Color = Color3.fromRGB(0, 170, 255)
 MainStroke.Thickness = 1.5
 MainStroke.Parent = MainFrame
 
--- Top Title Bar
 local TitleBar = Instance.new("Frame")
 TitleBar.Size = UDim2.new(1, 0, 0, 35)
 TitleBar.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
@@ -180,7 +173,6 @@ TitleText.Font = Enum.Font.GothamBold
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.Parent = TitleBar
 
--- Left Sidebar
 local Sidebar = Instance.new("Frame")
 Sidebar.Size = UDim2.new(0, 110, 1, -35)
 Sidebar.Position = UDim2.new(0, 0, 0, 35)
@@ -197,7 +189,6 @@ SidebarPadding.PaddingTop = UDim.new(0, 8)
 SidebarPadding.PaddingLeft = UDim.new(0, 5)
 SidebarPadding.Parent = Sidebar
 
--- Tab Buttons Creator
 local function createTabBtn(text)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0, 100, 0, 30)
@@ -217,11 +208,11 @@ end
 local TabMainBtn = createTabBtn("Main / ESP")
 local TabAimbotBtn = createTabBtn("AIMBOT 🎯")
 local TabIslandBtn = createTabBtn("ISLAND 🏝️")
+local TabFruitBtn = createTabBtn("FRUIT LIST 🍑")
 
 TabMainBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 TabMainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Containers
 local MainContainer = Instance.new("Frame")
 MainContainer.Size = UDim2.new(1, -120, 1, -45)
 MainContainer.Position = UDim2.new(0, 115, 0, 40)
@@ -261,17 +252,33 @@ UIListLayoutIsland.Parent = IslandContainer
 UIListLayoutIsland.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutIsland.Padding = UDim.new(0, 6)
 
--- Tab Switch Logic
+local FruitContainer = Instance.new("ScrollingFrame")
+FruitContainer.Size = UDim2.new(1, -120, 1, -45)
+FruitContainer.Position = UDim2.new(0, 115, 0, 40)
+FruitContainer.BackgroundTransparency = 1
+FruitContainer.Visible = false
+FruitContainer.CanvasSize = UDim2.new(0, 0, 0, 400)
+FruitContainer.ScrollBarThickness = 3
+FruitContainer.Parent = MainFrame
+
+local UIListLayoutFruit = Instance.new("UIListLayout")
+UIListLayoutFruit.Parent = FruitContainer
+UIListLayoutFruit.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutFruit.Padding = UDim.new(0, 5)
+
 local function resetTabs()
     MainContainer.Visible = false
     AimbotContainer.Visible = false
     IslandContainer.Visible = false
+    FruitContainer.Visible = false
     TabMainBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabMainBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabAimbotBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabAimbotBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabIslandBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabIslandBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    TabFruitBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    TabFruitBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
 end
 
 TabMainBtn.MouseButton1Click:Connect(function()
@@ -295,7 +302,13 @@ TabIslandBtn.MouseButton1Click:Connect(function()
     TabIslandBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
--- Function to Create Toggle Rows
+TabFruitBtn.MouseButton1Click:Connect(function()
+    resetTabs()
+    FruitContainer.Visible = true
+    TabFruitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    TabFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
 local function createToggleRow(parentContainer, name, defaultState, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -10, 0, 36)
@@ -340,9 +353,76 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
         callback(state)
     end)
 end
----------------------------------------------------------
--- ORIGINAL REAL WORKING FPS BOOST
----------------------------------------------------------
+local function createFruitLabel(text, isHeader)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -10, 0, isHeader and 26 or 22)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = isHeader and Color3.fromRGB(0, 255, 200) or Color3.fromRGB(220, 220, 220)
+    lbl.Font = isHeader and Enum.Font.GothamBold or Enum.Font.GothamSemibold
+    lbl.TextSize = isHeader and 12 or 11
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = FruitContainer
+end
+
+local function loadRealTimeDealerStock()
+    for _, child in ipairs(FruitContainer:GetChildren()) do
+        if child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+
+    createFruitLabel("⭐ Advance Fruit Stock (Live)", true)
+
+    local success, res = pcall(function()
+        return ReplicatedStorage.Remotes.CommF_:InvokeServer("GetFruits")
+    end)
+
+    local count = 1
+    if success and type(res) == "table" then
+        if res.AdvancedStock and #res.AdvancedStock > 0 then
+            for _, fruitData in ipairs(res.AdvancedStock) do
+                local fName = type(fruitData) == "table" and (fruitData.Name or fruitData[1]) or tostring(fruitData)
+                local fPrice = type(fruitData) == "table" and (fruitData.Price or fruitData[2]) or ""
+                local displayStr = fPrice ~= "" and string.format("   • %s - $%s", tostring(fName), tostring(fPrice)) or string.format("   • %s", tostring(fName))
+                createFruitLabel(displayStr, false)
+                count = count + 1
+            end
+        else
+            createFruitLabel("   • No Advanced Stock Available", false)
+            count = count + 1
+        end
+
+        createFruitLabel("📦 Normal Fruit Stock (Live)", true)
+        count = count + 1
+
+        if res.NormalStock and #res.NormalStock > 0 then
+            for _, fruitData in ipairs(res.NormalStock) do
+                local fName = type(fruitData) == "table" and (fruitData.Name or fruitData[1]) or tostring(fruitData)
+                local fPrice = type(fruitData) == "table" and (fruitData.Price or fruitData[2]) or ""
+                local displayStr = fPrice ~= "" and string.format("   • %s - $%s", tostring(fName), tostring(fPrice)) or string.format("   • %s", tostring(fName))
+                createFruitLabel(displayStr, false)
+                count = count + 1
+            end
+        else
+            createFruitLabel("   • No Normal Stock Available", false)
+            count = count + 1
+        end
+    else
+        createFruitLabel("   • Failed to fetch live dealer stock!", false)
+        count = count + 1
+    end
+
+    FruitContainer.CanvasSize = UDim2.new(0, 0, 0, count * 24)
+end
+
+TabFruitBtn.MouseButton1Click:Connect(function()
+    resetTabs()
+    FruitContainer.Visible = true
+    TabFruitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    TabFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    loadRealTimeDealerStock()
+end)
 
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
@@ -402,10 +482,6 @@ Workspace.DescendantAdded:Connect(function(v)
         end
     end
 end)
-
----------------------------------------------------------
--- AIMBOT ENGINE
----------------------------------------------------------
 
 local function getClosestTarget()
     local closest = nil
@@ -475,10 +551,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-
----------------------------------------------------------
--- AIMBOT UI SETUP
----------------------------------------------------------
 
 createToggleRow(AimbotContainer, "Silent Aim / Lock", false, function(enabled)
     aimbotEnabled = enabled
@@ -585,11 +657,6 @@ fovBtn.MouseButton1Click:Connect(function()
         fovBtn.Text = "Medium (150)"
     end
 end)
-
----------------------------------------------------------
--- ULTRA-SMOOTH TELEPORT (SHAKE FIXED)
----------------------------------------------------------
-
 local function flyTo(targetCFrame)
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -620,10 +687,6 @@ local function flyTo(targetCFrame)
     task.wait(duration)
     if connection then connection:Disconnect() end
 end
-
----------------------------------------------------------
--- ISLAND DATA & TELEPORT UI
----------------------------------------------------------
 
 local seaIslands = {
     [2753915549] = {
@@ -691,10 +754,6 @@ for islandName, pos in pairs(currentSeaIslands) do
 end
 
 IslandContainer.CanvasSize = UDim2.new(0, 0, 0, totalIslands * 38)
-
----------------------------------------------------------
--- ESP & HELPER FUNCTIONS (TEAM BASED & HEALTH GREEN)
----------------------------------------------------------
 
 local function isFruit(obj)
     if not (obj:IsA("Tool") or string.find(obj.Name, "Fruit")) then return false end
@@ -781,10 +840,9 @@ local function updatePlayerESP()
                     levelText = tostring(player.leaderstats.Level.Value)
                 end
 
-                -- Team Color Check: Marines = Sky Blue, Pirates = Red
-                local nameColor = Color3.fromRGB(255, 80, 80) -- Default Red (Pirates)
+                local nameColor = Color3.fromRGB(255, 80, 80)
                 if player.Team and (player.Team.Name == "Marines" or player.Team.Name == "Marine") then
-                    nameColor = Color3.fromRGB(135, 206, 235) -- Sky Blue for Marines
+                    nameColor = Color3.fromRGB(135, 206, 235)
                 end
 
                 local bbGui = Instance.new("BillboardGui")
@@ -807,7 +865,6 @@ local function updatePlayerESP()
 
                 task.spawn(function()
                     while playerESPEnabled and char and char.Parent and humanoid and humanoid.Health > 0 do
-                        -- Name color / Health text (Health is Green by default layout)
                         label.Text = string.format("%s [Lvl %s]\nHP: %d/%d", pName, levelText, math.floor(humanoid.Health), math.floor(humanoid.MaxHealth))
                         task.wait(0.5)
                     end
@@ -818,7 +875,6 @@ local function updatePlayerESP()
     end
 end
 
--- Create UI Toggles in Main Container
 createToggleRow(MainContainer, "Fruit ESP", false, function(enabled)
     fruitESPEnabled = enabled
     updateFruitESP()
@@ -841,14 +897,12 @@ createToggleRow(MainContainer, "FPS Boost", false, function(enabled)
     end
 end)
 
--- Auto Refresh Player ESP for New Joins, Deaths and Respawns
 RunService.RenderStepped:Connect(function()
     if playerESPEnabled and math.random(1, 30) == 1 then
         updatePlayerESP()
     end
 end)
 
--- Fly Collect Loop
 task.spawn(function()
     while task.wait(1) do
         if autoCollectEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
