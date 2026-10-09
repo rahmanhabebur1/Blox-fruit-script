@@ -1,10 +1,13 @@
--- Blox Fruit Helper Script (HoHo Hub Style UI with Fixed FPS Boost)
+-- MD GAMER SCRIPT (Blox Fruit Ultimate Helper UI)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
 
 -- Global States
 local autoCollectEnabled = false
@@ -12,13 +15,30 @@ local fruitESPEnabled = false
 local playerESPEnabled = false
 local fpsBoostEnabled = false
 
+-- Aimbot States
+local aimbotEnabled = false
+local aimTargetMode = "Players" -- "Players" or "NPCs"
+local targetLowestHP = true
+local fovRadius = 150
+local showFOV = false
+
 local fruitESPObjects = {}
 local playerESPObjects = {}
 local notifiedFruits = {}
 
+-- FOV Circle Creation
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1.5
+FOVCircle.Color = Color3.fromRGB(0, 255, 200)
+FOVCircle.Filled = false
+FOVCircle.Transparency = 0.8
+FOVCircle.NumSides = 30
+FOVCircle.Radius = fovRadius
+FOVCircle.Visible = false
+
 -- Main GUI
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BloxFruitHoHoUI"
+ScreenGui.Name = "MD_GAMER_SCRIPT_UI"
 ScreenGui.ResetOnSpawn = false
 
 if gethui then
@@ -30,7 +50,7 @@ else
     ScreenGui.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- Top-Right Notification Holder
+-- Notification System
 local NotificationHolder = Instance.new("Frame")
 NotificationHolder.Name = "NotificationHolder"
 NotificationHolder.Size = UDim2.new(0, 180, 0, 200)
@@ -92,7 +112,7 @@ local function sendNotification(title, text)
     end)
 end
 
--- Floating Open/Close Icon (HoHo Style Circular Button)
+-- Floating Open/Close Icon
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "OpenButton"
 ToggleButton.Size = UDim2.new(0, 45, 0, 45)
@@ -114,14 +134,14 @@ BtnStroke.Parent = ToggleButton
 local BtnIcon = Instance.new("TextLabel")
 BtnIcon.Size = UDim2.new(1, 0, 1, 0)
 BtnIcon.BackgroundTransparency = 1
-BtnIcon.Text = "🎅"
+BtnIcon.Text = "🎮"
 BtnIcon.TextSize = 22
 BtnIcon.Parent = ToggleButton
 
--- Main HoHo Hub Frame
+-- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 420, 0, 260)
+MainFrame.Size = UDim2.new(0, 430, 0, 270)
 MainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 24)
 MainFrame.Visible = false
@@ -152,7 +172,7 @@ local TitleText = Instance.new("TextLabel")
 TitleText.Size = UDim2.new(1, -15, 1, 0)
 TitleText.Position = UDim2.new(0, 12, 0, 0)
 TitleText.BackgroundTransparency = 1
-TitleText.Text = "HOHO HUB <font color=\"#00ffff\">[Blox Fruit Helper]</font>"
+TitleText.Text = "MD GAMER <font color=\"#00ffff\">[SCRIPT HUB]</font>"
 TitleText.RichText = true
 TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleText.TextSize = 14
@@ -167,38 +187,120 @@ Sidebar.Position = UDim2.new(0, 0, 0, 35)
 Sidebar.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
 Sidebar.Parent = MainFrame
 
-local TabButton = Instance.new("TextButton")
-TabButton.Size = UDim2.new(0.9, 0, 0, 32)
-TabButton.Position = UDim2.new(0.05, 0, 0.05, 0)
-TabButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-TabButton.Text = "Main / ESP"
-TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-TabButton.Font = Enum.Font.GothamBold
-TabButton.TextSize = 12
-TabButton.Parent = Sidebar
+local UIListLayoutSidebar = Instance.new("UIListLayout")
+UIListLayoutSidebar.Parent = Sidebar
+UIListLayoutSidebar.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutSidebar.Padding = UDim.new(0, 5)
 
-local TabCorner = Instance.new("UICorner")
-TabCorner.CornerRadius = UDim.new(0, 6)
-TabCorner.Parent = TabButton
+local SidebarPadding = Instance.new("UIPadding")
+SidebarPadding.PaddingTop = UDim.new(0, 8)
+SidebarPadding.PaddingLeft = UDim.new(0, 5)
+SidebarPadding.Parent = Sidebar
 
--- Container Area (Right Side)
-local Container = Instance.new("Frame")
-Container.Size = UDim2.new(1, -120, 1, -45)
-Container.Position = UDim2.new(0, 115, 0, 40)
-Container.BackgroundTransparency = 1
-Container.Parent = MainFrame
+-- Tab Buttons Creator
+local function createTabBtn(text)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 100, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 10
+    btn.Parent = Sidebar
 
-local UIListLayoutContainer = Instance.new("UIListLayout")
-UIListLayoutContainer.Parent = Container
-UIListLayoutContainer.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayoutContainer.Padding = UDim.new(0, 8)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+    return btn
+end
 
--- Function to Create HoHo Style Toggle Rows
-local function createToggleRow(name, callback)
+local TabMainBtn = createTabBtn("Main / ESP")
+local TabAimbotBtn = createTabBtn("AIMBOT 🎯")
+local TabIslandBtn = createTabBtn("ISLAND 🏝️")
+
+TabMainBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+TabMainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Containers
+local MainContainer = Instance.new("Frame")
+MainContainer.Size = UDim2.new(1, -120, 1, -45)
+MainContainer.Position = UDim2.new(0, 115, 0, 40)
+MainContainer.BackgroundTransparency = 1
+MainContainer.Parent = MainFrame
+
+local UIListLayoutMain = Instance.new("UIListLayout")
+UIListLayoutMain.Parent = MainContainer
+UIListLayoutMain.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutMain.Padding = UDim.new(0, 6)
+
+local AimbotContainer = Instance.new("ScrollingFrame")
+AimbotContainer.Size = UDim2.new(1, -120, 1, -45)
+AimbotContainer.Position = UDim2.new(0, 115, 0, 40)
+AimbotContainer.BackgroundTransparency = 1
+AimbotContainer.Visible = false
+AimbotContainer.CanvasSize = UDim2.new(0, 0, 0, 220)
+AimbotContainer.ScrollBarThickness = 3
+AimbotContainer.Parent = MainFrame
+
+local UIListLayoutAim = Instance.new("UIListLayout")
+UIListLayoutAim.Parent = AimbotContainer
+UIListLayoutAim.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutAim.Padding = UDim.new(0, 6)
+
+local IslandContainer = Instance.new("ScrollingFrame")
+IslandContainer.Size = UDim2.new(1, -120, 1, -45)
+IslandContainer.Position = UDim2.new(0, 115, 0, 40)
+IslandContainer.BackgroundTransparency = 1
+IslandContainer.Visible = false
+IslandContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+IslandContainer.ScrollBarThickness = 3
+IslandContainer.Parent = MainFrame
+
+local UIListLayoutIsland = Instance.new("UIListLayout")
+UIListLayoutIsland.Parent = IslandContainer
+UIListLayoutIsland.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutIsland.Padding = UDim.new(0, 6)
+
+-- Tab Switch Logic
+local function resetTabs()
+    MainContainer.Visible = false
+    AimbotContainer.Visible = false
+    IslandContainer.Visible = false
+    TabMainBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    TabMainBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    TabAimbotBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    TabAimbotBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    TabIslandBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    TabIslandBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+end
+
+TabMainBtn.MouseButton1Click:Connect(function()
+    resetTabs()
+    MainContainer.Visible = true
+    TabMainBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    TabMainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
+TabAimbotBtn.MouseButton1Click:Connect(function()
+    resetTabs()
+    AimbotContainer.Visible = true
+    TabAimbotBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    TabAimbotBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
+TabIslandBtn.MouseButton1Click:Connect(function()
+    resetTabs()
+    IslandContainer.Visible = true
+    TabIslandBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    TabIslandBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
+-- Function to Create Toggle Rows
+local function createToggleRow(parentContainer, name, defaultState, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -10, 0, 42)
+    frame.Size = UDim2.new(1, -10, 0, 36)
     frame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
-    frame.Parent = Container
+    frame.Parent = parentContainer
 
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
@@ -211,25 +313,25 @@ local function createToggleRow(name, callback)
     label.Text = name
     label.TextColor3 = Color3.fromRGB(220, 220, 220)
     label.Font = Enum.Font.GothamSemibold
-    label.TextSize = 12
+    label.TextSize = 11
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = frame
 
     local toggleBtn = Instance.new("TextButton")
     toggleBtn.Size = UDim2.new(0.28, 0, 0.65, 0)
     toggleBtn.Position = UDim2.new(0.68, 0, 0.175, 0)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-    toggleBtn.Text = "OFF"
-    toggleBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(40, 40, 55)
+    toggleBtn.Text = defaultState and "ON" or "OFF"
+    toggleBtn.TextColor3 = defaultState and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
     toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.TextSize = 11
+    toggleBtn.TextSize = 10
     toggleBtn.Parent = frame
 
     local btnCorner = Instance.new("UICorner")
     btnCorner.CornerRadius = UDim.new(0, 5)
     btnCorner.Parent = toggleBtn
 
-    local state = false
+    local state = defaultState
     toggleBtn.MouseButton1Click:Connect(function()
         state = not state
         toggleBtn.Text = state and "ON" or "OFF"
@@ -238,9 +340,288 @@ local function createToggleRow(name, callback)
         callback(state)
     end)
 end
+---------------------------------------------------------
+-- AIMBOT ENGINE
+---------------------------------------------------------
+
+local function getClosestTarget()
+    local closest = nil
+    local shortestDist = fovRadius
+    local lowestHP = math.huge
+
+    local camera = Workspace.CurrentCamera
+    local mousePos = Vector2.new(Mouse.X, Mouse.Y)
+
+    if aimTargetMode == "Players" then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local hum = player.Character:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health > 0 then
+                    local screenPos, onScreen = camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                        if dist <= fovRadius then
+                            if targetLowestHP then
+                                if hum.Health < lowestHP then
+                                    lowestHP = hum.Health
+                                    closest = player.Character.HumanoidRootPart
+                                end
+                            else
+                                if dist < shortestDist then
+                                    shortestDist = dist
+                                    closest = player.Character.HumanoidRootPart
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    else
+        for _, npc in ipairs(Workspace.Enemies:GetChildren()) do
+            if npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChildOfClass("Humanoid") then
+                local hum = npc:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health > 0 then
+                    local screenPos, onScreen = camera:WorldToViewportPoint(npc.HumanoidRootPart.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                        if dist <= fovRadius then
+                            if dist < shortestDist then
+                                shortestDist = dist
+                                closest = npc.HumanoidRootPart
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
+RunService.RenderStepped:Connect(function()
+    FOVCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
+    FOVCircle.Radius = fovRadius
+    FOVCircle.Visible = showFOV
+
+    if aimbotEnabled then
+        local target = getClosestTarget()
+        if target then
+            Workspace.CurrentCamera.CFrame = CFrame.new(Workspace.CurrentCamera.CFrame.Position, target.Position)
+        end
+    end
+end)
 
 ---------------------------------------------------------
--- REAL WORKING FPS BOOST (SHADOW, FOG & VFX REMOVER)
+-- AIMBOT UI SETUP
+---------------------------------------------------------
+
+createToggleRow(AimbotContainer, "Silent Aim / Lock", false, function(enabled)
+    aimbotEnabled = enabled
+    if enabled then sendNotification("🎮 MD GAMER", "Aimbot Activated!") end
+end)
+
+createToggleRow(AimbotContainer, "Show FOV Circle", false, function(enabled)
+    showFOV = enabled
+end)
+
+createToggleRow(AimbotContainer, "Prioritize Low HP", true, function(enabled)
+    targetLowestHP = enabled
+end)
+
+-- Mode Switcher
+local modeFrame = Instance.new("Frame")
+modeFrame.Size = UDim2.new(1, -10, 0, 36)
+modeFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+modeFrame.Parent = AimbotContainer
+
+local modeCorner = Instance.new("UICorner")
+modeCorner.CornerRadius = UDim.new(0, 6)
+modeCorner.Parent = modeFrame
+
+local modeLabel = Instance.new("TextLabel")
+modeLabel.Size = UDim2.new(0.5, 0, 1, 0)
+modeLabel.Position = UDim2.new(0, 10, 0, 0)
+modeLabel.BackgroundTransparency = 1
+modeLabel.Text = "Target Mode"
+modeLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+modeLabel.Font = Enum.Font.GothamSemibold
+modeLabel.TextSize = 11
+modeLabel.TextXAlignment = Enum.TextXAlignment.Left
+modeLabel.Parent = modeFrame
+
+local modeBtn = Instance.new("TextButton")
+modeBtn.Size = UDim2.new(0.4, 0, 0.65, 0)
+modeBtn.Position = UDim2.new(0.56, 0, 0.175, 0)
+modeBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+modeBtn.Text = "Players"
+modeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+modeBtn.Font = Enum.Font.GothamBold
+modeBtn.TextSize = 10
+modeBtn.Parent = modeFrame
+
+local modeBtnCorner = Instance.new("UICorner")
+modeBtnCorner.CornerRadius = UDim.new(0, 5)
+modeBtnCorner.Parent = modeBtn
+
+modeBtn.MouseButton1Click:Connect(function()
+    if aimTargetMode == "Players" then
+        aimTargetMode = "NPCs"
+        modeBtn.Text = "NPCs / Mobs"
+        modeBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+    else
+        aimTargetMode = "Players"
+        modeBtn.Text = "Players"
+        modeBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    end
+end)
+
+-- FOV Size Switcher
+local fovFrame = Instance.new("Frame")
+fovFrame.Size = UDim2.new(1, -10, 0, 36)
+fovFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+fovFrame.Parent = AimbotContainer
+
+local fovCorner = Instance.new("UICorner")
+fovCorner.CornerRadius = UDim.new(0, 6)
+fovCorner.Parent = fovFrame
+
+local fovLabel = Instance.new("TextLabel")
+fovLabel.Size = UDim2.new(0.5, 0, 1, 0)
+fovLabel.Position = UDim2.new(0, 10, 0, 0)
+fovLabel.BackgroundTransparency = 1
+fovLabel.Text = "FOV Size"
+fovLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+fovLabel.Font = Enum.Font.GothamSemibold
+fovLabel.TextSize = 11
+fovLabel.TextXAlignment = Enum.TextXAlignment.Left
+fovLabel.Parent = fovFrame
+
+local fovBtn = Instance.new("TextButton")
+fovBtn.Size = UDim2.new(0.4, 0, 0.65, 0)
+fovBtn.Position = UDim2.new(0.56, 0, 0.175, 0)
+fovBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+fovBtn.Text = "Medium (150)"
+fovBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+fovBtn.Font = Enum.Font.GothamBold
+fovBtn.TextSize = 10
+fovBtn.Parent = fovFrame
+
+local fovBtnCorner = Instance.new("UICorner")
+fovBtnCorner.CornerRadius = UDim.new(0, 5)
+fovBtnCorner.Parent = fovBtn
+
+fovBtn.MouseButton1Click:Connect(function()
+    if fovRadius == 150 then
+        fovRadius = 250
+        fovBtn.Text = "Large (250)"
+    elseif fovRadius == 250 then
+        fovRadius = 100
+        fovBtn.Text = "Small (100)"
+    else
+        fovRadius = 150
+        fovBtn.Text = "Medium (150)"
+    end
+end)
+
+---------------------------------------------------------
+-- FLY TELEPORT FUNCTIONALITY (250 SPEED)
+---------------------------------------------------------
+
+local currentFlyTween = nil
+
+local function flyTo(targetCFrame)
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+    local hrp = char.HumanoidRootPart
+    local distance = (hrp.Position - targetCFrame.Position).Magnitude
+    local flySpeed = 250
+    local duration = distance / flySpeed
+
+    if currentFlyTween then currentFlyTween:Cancel() end
+
+    hrp.Velocity = Vector3.zero
+    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+    currentFlyTween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
+    currentFlyTween:Play()
+    return currentFlyTween
+end
+
+---------------------------------------------------------
+-- ISLAND DATA & TELEPORT UI
+---------------------------------------------------------
+
+local seaIslands = {
+    [2753915549] = {
+        ["Starter Island"] = Vector3.new(1090, 16, 1400),
+        ["Jungle"] = Vector3.new(-1240, 12, 380),
+        ["Pirate Village"] = Vector3.new(-1120, 4, 3850),
+        ["Desert"] = Vector3.new(1090, 6, 4360),
+        ["Middle Town"] = Vector3.new(-650, 15, 1500),
+        ["Frozen Village"] = Vector3.new(1150, 7, -1150),
+        ["Marine Ford"] = Vector3.new(-4800, 20, 4200),
+        ["Skypiea"] = Vector3.new(-4850, 718, -2620),
+        ["Prison"] = Vector3.new(4850, 5, 740),
+        ["Colosseum"] = Vector3.new(-1450, 7, -2750),
+        ["Magma Village"] = Vector3.new(-5250, 8, 8500),
+        ["Underwater City"] = Vector3.new(3860, 5, -1920),
+        ["Fountain City"] = Vector3.new(5120, 4, 4100)
+    },
+    [4442272183] = {
+        ["Cafe"] = Vector3.new(-380, 73, 300),
+        ["Kingdom of Rose"] = Vector3.new(-450, 73, 1500),
+        ["Ushapp's Island"] = Vector3.new(4800, 8, 2800),
+        ["Green Zone"] = Vector3.new(-2400, 73, -3200),
+        ["Graveyard"] = Vector3.new(-5400, 48, -750),
+        ["Snow Mountain"] = Vector3.new(1300, 400, -1300),
+        ["Hot and Cold"] = Vector3.new(-6100, 15, -5000),
+        ["Cursed Ship"] = Vector3.new(900, 125, 3300),
+        ["Ice Castle"] = Vector3.new(5500, 28, -6200),
+        ["Forgotten Island"] = Vector3.new(-3050, 235, -10150)
+    },
+    [7449423635] = {
+        ["Port Town"] = Vector3.new(-2900, 15, 5300),
+        ["Great Tree"] = Vector3.new(2250, 25, -7200),
+        ["Floating Turtle"] = Vector3.new(-13200, 330, -7600),
+        ["Castle on the Sea"] = Vector3.new(-5000, 315, -3000),
+        ["Haunted Castle"] = Vector3.new(-9500, 140, 5500),
+        ["Chocolate Land"] = Vector3.new(100, 25, -12100),
+        ["Ice Cream Land"] = Vector3.new(-900, 65, -11000),
+        ["Tiki Outpost"] = Vector3.new(-16200, 10, 500)
+    }
+}
+
+local currentSeaIslands = seaIslands[game.PlaceId] or seaIslands[2753915549]
+local totalIslands = 0
+
+for islandName, pos in pairs(currentSeaIslands) do
+    totalIslands = totalIslands + 1
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -10, 0, 32)
+    btn.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+    btn.Text = "  📍 " .. islandName
+    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 11
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.Parent = IslandContainer
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        sendNotification("🏝️ Flying...", islandName)
+        flyTo(CFrame.new(pos))
+    end)
+end
+
+IslandContainer.CanvasSize = UDim2.new(0, 0, 0, totalIslands * 38)
+
+---------------------------------------------------------
+-- REAL WORKING FPS BOOST
 ---------------------------------------------------------
 
 ToggleButton.MouseButton1Click:Connect(function()
@@ -248,27 +629,22 @@ ToggleButton.MouseButton1Click:Connect(function()
 end)
 
 local function removeVFX(v)
-    if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") then
-        v.Enabled = false
-    elseif v:IsA("Beam") or v:IsA("Trail") then
+    if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") or v:IsA("Beam") or v:IsA("Trail") then
         v.Enabled = false
     end
 end
 
 local function processFPSBoost()
-    -- 1. Fog & Shadows Complete Disable
     Lighting.GlobalShadows = false
     Lighting.FogEnd = 9e9
     Lighting.FogStart = 9e9
 
-    -- 2. Remove Lighting Sky Fog / Post Effects
     for _, obj in ipairs(Lighting:GetChildren()) do
         if obj:IsA("PostEffect") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("SunRaysEffect") then
             obj.Enabled = false
         end
     end
 
-    -- 3. Clear Camera Visual Effects
     local cam = Workspace.CurrentCamera
     if cam then
         for _, obj in ipairs(cam:GetChildren()) do
@@ -278,7 +654,6 @@ local function processFPSBoost()
         end
     end
 
-    -- 4. Disable All Attack VFX & World Particles
     for _, v in ipairs(Workspace:GetDescendants()) do
         removeVFX(v)
         if v:IsA("BasePart") then
@@ -287,24 +662,10 @@ local function processFPSBoost()
     end
 end
 
--- Continuous Loop to Keep Fog/Shadows/VFX Off (Prevents Game Auto-Reloading)
 task.spawn(function()
     while true do
         task.wait(1)
-        if fpsBoostEnabled then
-            pcall(processFPSBoost)
-        end
-    end
-end)
-
--- Auto-disable new attack skills/spells during PvP
-Workspace.DescendantAdded:Connect(function(v)
-    if fpsBoostEnabled then
-        task.wait()
-        removeVFX(v)
-        if v:IsA("BasePart") then
-            v.CastShadow = false
-        end
+        if fpsBoostEnabled then pcall(processFPSBoost) end
     end
 end)
 
@@ -314,19 +675,14 @@ end)
 
 local function isFruit(obj)
     if not (obj:IsA("Tool") or string.find(obj.Name, "Fruit")) then return false end
-    local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")
-    return handle ~= nil
+    return (obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")) ~= nil
 end
 
 local function checkFruitsForNotification(isNewSpawn)
     for _, obj in ipairs(Workspace:GetChildren()) do
         if isFruit(obj) and not notifiedFruits[obj] then
             notifiedFruits[obj] = true
-            if isNewSpawn then
-                sendNotification("🍎 Fruit Spawned!", obj.Name)
-            else
-                sendNotification("🍇 Fruit Found:", obj.Name)
-            end
+            sendNotification(isNewSpawn and "🍎 Fruit Spawned!" or "🍇 Fruit Found:", obj.Name)
         end
     end
 end
@@ -365,7 +721,6 @@ local function updateFruitESP()
                 label.Size = UDim2.new(1, 0, 1, 0)
                 label.BackgroundTransparency = 1
                 label.TextColor3 = Color3.fromRGB(0, 255, 200)
-                label.TextStrokeTransparency = 0
                 label.TextSize = 13
                 label.Font = Enum.Font.GothamBold
                 label.Text = "🍇 " .. obj.Name
@@ -415,7 +770,6 @@ local function updatePlayerESP()
                 label.Size = UDim2.new(1, 0, 1, 0)
                 label.BackgroundTransparency = 1
                 label.TextColor3 = Color3.fromRGB(255, 80, 80)
-                label.TextStrokeTransparency = 0
                 label.TextSize = 12
                 label.Font = Enum.Font.GothamBold
                 label.Parent = bbGui
@@ -434,45 +788,26 @@ local function updatePlayerESP()
     end
 end
 
--- Fly Function
-local function flyTo(targetCFrame)
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-
-    local hrp = char.HumanoidRootPart
-    local distance = (hrp.Position - targetCFrame.Position).Magnitude
-    local flySpeed = 250
-    local duration = distance / flySpeed
-
-    hrp.Velocity = Vector3.zero
-    
-    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
-    
-    tween:Play()
-    return tween
-end
-
--- Create UI Toggles in Main/ESP Container
-createToggleRow("Fruit ESP", function(enabled)
+-- Create UI Toggles in Main Container
+createToggleRow(MainContainer, "Fruit ESP", false, function(enabled)
     fruitESPEnabled = enabled
     updateFruitESP()
 end)
 
-createToggleRow("Player ESP", function(enabled)
+createToggleRow(MainContainer, "Player ESP", false, function(enabled)
     playerESPEnabled = enabled
     updatePlayerESP()
 end)
 
-createToggleRow("Auto Fly Collect", function(enabled)
+createToggleRow(MainContainer, "Auto Fly Collect", false, function(enabled)
     autoCollectEnabled = enabled
 end)
 
-createToggleRow("FPS Boost", function(enabled)
+createToggleRow(MainContainer, "FPS Boost", false, function(enabled)
     fpsBoostEnabled = enabled
     if enabled then
         pcall(processFPSBoost)
-        sendNotification("🚀 FPS Boost", "Shadows, Fog & Attack VFX Removed!")
+        sendNotification("🚀 FPS Boost", "Shadows & VFX Removed!")
     end
 end)
 
@@ -485,9 +820,7 @@ task.spawn(function()
                     local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")
                     if handle then
                         local currentTween = flyTo(handle.CFrame)
-                        if currentTween then
-                            currentTween.Completed:Wait()
-                        end
+                        if currentTween then currentTween.Completed:Wait() end
                         break
                     end
                 end
@@ -496,18 +829,12 @@ task.spawn(function()
     end
 end)
 
--- Initial Checks & Auto Refresh
 checkFruitsForNotification(false)
 
-Workspace.ChildAdded:Connect(function(child)
+Workspace.ChildAdded:Connect(function()
     task.wait(0.5)
     if fruitESPEnabled then updateFruitESP() end
     checkFruitsForNotification(true)
 end)
 
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        task.wait(1)
-        if playerESPEnabled then updatePlayerESP() end
-    end)
-end)
+sendNotification("🎮 MD GAMER SCRIPT", "Successfully Loaded!")
