@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1/4 - Balanced FPS Boost with Good Textures)
+-- MD GAMER SCRIPT (Part 1)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -21,6 +21,10 @@ local autoQuestEnabled = false
 local fastAttackEnabled = false
 local bringMobEnabled = false
 local selectWeaponType = "Melee"
+
+local aimbotNearestEnabled = false
+local ignoreMobsEnabled = false
+local ignorePlayersEnabled = false
 
 local fruitESPObjects = {}
 local playerESPObjects = {}
@@ -198,6 +202,7 @@ local function createTabBtn(text)
 end
 
 local TabMainBtn = createTabBtn("Main / ESP")
+local TabPvpBtn = createTabBtn("PVP ☠️")
 local TabFarmBtn = createTabBtn("AUTO FARM ⚔️")
 local TabIslandBtn = createTabBtn("ISLAND 🏝️")
 local TabFruitBtn = createTabBtn("FRUIT LIST 🍑")
@@ -219,6 +224,20 @@ UIListLayoutMain.Parent = MainContainer
 UIListLayoutMain.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutMain.Padding = UDim.new(0, 6)
 
+local PvpContainer = Instance.new("ScrollingFrame")
+PvpContainer.Size = UDim2.new(1, -120, 1, -45)
+PvpContainer.Position = UDim2.new(0, 115, 0, 40)
+PvpContainer.BackgroundTransparency = 1
+PvpContainer.Visible = false
+PvpContainer.CanvasSize = UDim2.new(0, 0, 0, 200)
+PvpContainer.ScrollBarThickness = 3
+PvpContainer.Parent = MainFrame
+
+local UIListLayoutPvp = Instance.new("UIListLayout")
+UIListLayoutPvp.Parent = PvpContainer
+UIListLayoutPvp.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutPvp.Padding = UDim.new(0, 6)
+
 local FarmContainer = Instance.new("ScrollingFrame")
 FarmContainer.Size = UDim2.new(1, -120, 1, -45)
 FarmContainer.Position = UDim2.new(0, 115, 0, 40)
@@ -232,7 +251,7 @@ local UIListLayoutFarm = Instance.new("UIListLayout")
 UIListLayoutFarm.Parent = FarmContainer
 UIListLayoutFarm.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutFarm.Padding = UDim.new(0, 6)
-
+-- MD GAMER SCRIPT (Part 2)
 local IslandContainer = Instance.new("ScrollingFrame")
 IslandContainer.Size = UDim2.new(1, -120, 1, -45)
 IslandContainer.Position = UDim2.new(0, 115, 0, 40)
@@ -277,12 +296,15 @@ UIListLayoutServer.Padding = UDim.new(0, 6)
 
 local function resetTabs()
     MainContainer.Visible = false
+    PvpContainer.Visible = false
     FarmContainer.Visible = false
     IslandContainer.Visible = false
     FruitContainer.Visible = false
     ServerContainer.Visible = false
     TabMainBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabMainBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    TabPvpBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    TabPvpBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabFarmBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabFarmBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabIslandBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
@@ -298,6 +320,13 @@ TabMainBtn.MouseButton1Click:Connect(function()
     MainContainer.Visible = true
     TabMainBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     TabMainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
+TabPvpBtn.MouseButton1Click:Connect(function()
+    resetTabs()
+    PvpContainer.Visible = true
+    TabPvpBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    TabPvpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
 TabFarmBtn.MouseButton1Click:Connect(function()
@@ -372,7 +401,21 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
         callback(state)
     end)
 end
--- MD GAMER SCRIPT (Part 2/4 - Auto Farm & Quality Texture FPS Boost Logic)
+
+-- PVP Tab Options
+createToggleRow(PvpContainer, "Aimbot Nearest", false, function(enabled)
+    aimbotNearestEnabled = enabled
+    if enabled then sendNotification("🎯 Aimbot", "Activated!") end
+end)
+
+createToggleRow(PvpContainer, "Ignore Mobs", false, function(enabled)
+    ignoreMobsEnabled = enabled
+end)
+
+createToggleRow(PvpContainer, "Ignore Players", false, function(enabled)
+    ignorePlayersEnabled = enabled
+end)
+
 createToggleRow(FarmContainer, "Auto Level Farm", false, function(enabled)
     autoFarmEnabled = enabled
     if enabled then sendNotification("⚔️ Auto Farm", "Level Farm Activated!") end
@@ -380,7 +423,7 @@ end)
 
 createToggleRow(FarmContainer, "Bring Mob (300m)", false, function(enabled)
     bringMobEnabled = enabled
-    if enabled then sendNotification("📌 Bring Mob", "Enabled (Radius: 300m)") end
+    if enabled then sendNotification("📌 Bring Mob", "Activated!") end
 end)
 
 createToggleRow(FarmContainer, "Auto Accept Quest", false, function(enabled)
@@ -474,6 +517,57 @@ task.spawn(function()
     end
 end)
 
+local function isAttackingOrMouseDown()
+    return UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or fastAttackEnabled
+end
+
+RunService.RenderStepped:Connect(function()
+    if aimbotNearestEnabled and isAttackingOrMouseDown() and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        pcall(function()
+            local hrp = LocalPlayer.Character.HumanoidRootPart
+            local nearestTarget = nil
+            local shortestDist = math.huge
+
+            if not ignorePlayersEnabled then
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        local pHum = player.Character:FindFirstChildOfClass("Humanoid")
+                        if pHum and pHum.Health > 0 then
+                            local dist = (hrp.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                            if dist < shortestDist then
+                                shortestDist = dist
+                                nearestTarget = player.Character.HumanoidRootPart
+                            end
+                        end
+                    end
+                end
+            end
+
+            if not ignoreMobsEnabled then
+                local enemiesFolder = Workspace:FindFirstChild("Enemies")
+                if enemiesFolder then
+                    for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+                        local eHRP = enemy:FindFirstChild("HumanoidRootPart")
+                        local eHum = enemy:FindFirstChildOfClass("Humanoid")
+                        if eHRP and eHum and eHum.Health > 0 then
+                            local dist = (hrp.Position - eHRP.Position).Magnitude
+                            if dist < shortestDist then
+                                shortestDist = dist
+                                nearestTarget = eHRP
+                            end
+                        end
+                    end
+                end
+            end
+
+            if nearestTarget then
+                local targetPos = Vector3.new(nearestTarget.Position.X, hrp.Position.Y, nearestTarget.Position.Z)
+                hrp.CFrame = CFrame.new(hrp.Position, targetPos)
+            end
+        end)
+    end
+end)
+-- MD GAMER SCRIPT (Part 3)
 task.spawn(function()
     while task.wait(0.2) do
         if fastAttackEnabled then
@@ -487,7 +581,7 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-    while task.wait(0.2) do
+    while task.wait(0.15) do
         if bringMobEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             pcall(function()
                 local hrp = LocalPlayer.Character.HumanoidRootPart
@@ -500,15 +594,9 @@ task.spawn(function()
                             local dist = (hrp.Position - eHRP.Position).Magnitude
                             if dist <= 300 then
                                 eHRP.CFrame = hrp.CFrame * CFrame.new(0, 0, -3)
-                                eHRP.Velocity = Vector3.zero
+                                eHRP.Velocity = Vector3.new(0, 0, 0)
                                 if enemy:FindFirstChild("Head") then
                                     enemy.Head.CanCollide = false
-                                end
-                                for _, part in ipairs(enemy:GetChildren()) do
-                                    if part:IsA("BasePart") then
-                                        part.AssemblyLinearVelocity = Vector3.zero
-                                        part.AssemblyAngularVelocity = Vector3.zero
-                                    end
                                 end
                             end
                         end
@@ -519,14 +607,11 @@ task.spawn(function()
     end
 end)
 
----------------------------------------------------------
--- BALANCED FPS BOOST (KEEPING GOOD TEXTURES & REMOVING LAG VFX)
----------------------------------------------------------
 local function cleanLagEffects(v)
     if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") or v:IsA("Beam") or v:IsA("Trail") or v:IsA("Highlight") then
         v:Destroy()
     elseif v:IsA("BasePart") then
-        v.CastShadow = false -- Removes shadow to boost performance while keeping textures intact
+        v.CastShadow = false
     end
 end
 
@@ -642,7 +727,7 @@ TabFruitBtn.MouseButton1Click:Connect(function()
     TabFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     loadRealTimeDealerStock()
 end)
--- MD GAMER SCRIPT (Part 3/4 - Server Travel UI & Toggle Bindings)
+
 local jobFrame = Instance.new("Frame")
 jobFrame.Size = UDim2.new(1, -10, 0, 85)
 jobFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
@@ -752,7 +837,7 @@ ServerContainer.CanvasSize = UDim2.new(0, 0, 0, 130)
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
--- MD GAMER SCRIPT (Part 4/4 - Island Teleport, ESP & Final Configs)
+
 local function flyTo(targetCFrame)
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -989,7 +1074,7 @@ createToggleRow(MainContainer, "FPS Boost", false, function(enabled)
     fpsBoostEnabled = enabled
     if enabled then
         pcall(executeBalancedFPSBoost)
-        sendNotification("🚀 FPS Boost", "Shadows, Fog & Lag VFX Removed (Textures Safe!)")
+        sendNotification("🚀 FPS Boost", "Balanced Mode Active (Textures Safe!)")
     end
 end)
 
