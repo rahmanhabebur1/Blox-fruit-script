@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1/4 - Fixed Bring Mob & Stable Server Stack)
+-- MD GAMER SCRIPT (Part 1/4 - Balanced FPS Boost with Good Textures)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -372,25 +372,15 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
         callback(state)
     end)
 end
--- MD GAMER SCRIPT (Part 2/4 - Fixed Bring Mob Logic & Hit Fix)
+-- MD GAMER SCRIPT (Part 2/4 - Auto Farm & Quality Texture FPS Boost Logic)
 createToggleRow(FarmContainer, "Auto Level Farm", false, function(enabled)
     autoFarmEnabled = enabled
     if enabled then sendNotification("⚔️ Auto Farm", "Level Farm Activated!") end
 end)
 
--- Fixed Bring Mob: Stays at fixed target point without shaking/following body, keeping server damage valid
-local cachedBringPosition = nil
-
 createToggleRow(FarmContainer, "Bring Mob (300m)", false, function(enabled)
     bringMobEnabled = enabled
-    if enabled then
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            cachedBringPosition = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -4)
-        end
-        sendNotification("📌 Bring Mob", "Stable Fixed Cluster Enabled")
-    else
-        cachedBringPosition = nil
-    end
+    if enabled then sendNotification("📌 Bring Mob", "Enabled (Radius: 300m)") end
 end)
 
 createToggleRow(FarmContainer, "Auto Accept Quest", false, function(enabled)
@@ -496,16 +486,11 @@ task.spawn(function()
     end
 end)
 
--- STABLE BRING MOB EXECUTION (Locks mob position properly to allow server hits)
 task.spawn(function()
-    while task.wait(0.15) do
+    while task.wait(0.2) do
         if bringMobEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             pcall(function()
                 local hrp = LocalPlayer.Character.HumanoidRootPart
-                if not cachedBringPosition or (hrp.Position - cachedBringPosition.Position).Magnitude > 20 then
-                    cachedBringPosition = hrp.CFrame * CFrame.new(0, 0, -3.5)
-                end
-
                 local enemiesFolder = Workspace:FindFirstChild("Enemies")
                 if enemiesFolder then
                     for _, enemy in ipairs(enemiesFolder:GetChildren()) do
@@ -514,16 +499,15 @@ task.spawn(function()
                         if eHRP and eHum and eHum.Health > 0 then
                             local dist = (hrp.Position - eHRP.Position).Magnitude
                             if dist <= 300 then
-                                eHRP.CFrame = cachedBringPosition
-                                eHRP.Velocity = Vector3.new(0, 0, 0)
-                                eHRP.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                                eHRP.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                                eHRP.CFrame = hrp.CFrame * CFrame.new(0, 0, -3)
+                                eHRP.Velocity = Vector3.zero
                                 if enemy:FindFirstChild("Head") then
                                     enemy.Head.CanCollide = false
                                 end
                                 for _, part in ipairs(enemy:GetChildren()) do
                                     if part:IsA("BasePart") then
-                                        part.CanCollide = false
+                                        part.AssemblyLinearVelocity = Vector3.zero
+                                        part.AssemblyAngularVelocity = Vector3.zero
                                     end
                                 end
                             end
@@ -535,11 +519,14 @@ task.spawn(function()
     end
 end)
 
+---------------------------------------------------------
+-- BALANCED FPS BOOST (KEEPING GOOD TEXTURES & REMOVING LAG VFX)
+---------------------------------------------------------
 local function cleanLagEffects(v)
     if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") or v:IsA("Beam") or v:IsA("Trail") or v:IsA("Highlight") then
         v:Destroy()
     elseif v:IsA("BasePart") then
-        v.CastShadow = false
+        v.CastShadow = false -- Removes shadow to boost performance while keeping textures intact
     end
 end
 
@@ -1036,4 +1023,4 @@ Workspace.ChildAdded:Connect(function()
     checkFruitsForNotification(true)
 end)
 
-sendNotification("🎮 MD GAMER SCRIPT", "Successfully Loaded with Fixed Bring Mob!")
+sendNotification("🎮 MD GAMER SCRIPT", "Successfully Loaded!")
