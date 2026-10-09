@@ -1,4 +1,4 @@
--- Blox Fruit Helper Script (HoHo Hub Style UI with FPS Boost Inside Main/ESP)
+-- Blox Fruit Helper Script (HoHo Hub Style UI with Fixed FPS Boost)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -240,86 +240,77 @@ local function createToggleRow(name, callback)
 end
 
 ---------------------------------------------------------
--- CORE LOGIC & FEATURES
+-- REAL WORKING FPS BOOST (SHADOW, FOG & VFX REMOVER)
 ---------------------------------------------------------
 
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- FPS Boost Logic
-local originalLighting = {
-    GlobalShadows = Lighting.GlobalShadows,
-    FogEnd = Lighting.FogEnd,
-    FogStart = Lighting.FogStart
-}
+local function removeVFX(v)
+    if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") then
+        v.Enabled = false
+    elseif v:IsA("Beam") or v:IsA("Trail") then
+        v.Enabled = false
+    end
+end
 
-local function applyFPSBoost(enable)
-    fpsBoostEnabled = enable
-    if enable then
-        -- Shadow & Fog Remove
-        Lighting.GlobalShadows = false
-        Lighting.FogEnd = 9e9
-        Lighting.FogStart = 9e9
+local function processFPSBoost()
+    -- 1. Fog & Shadows Complete Disable
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.FogStart = 9e9
 
-        -- Sky / Atmosphere / Clouds Cleanup
-        for _, obj in ipairs(Lighting:GetChildren()) do
-            if obj:IsA("PostEffect") or obj:IsA("Sky") or obj:IsA("Atmosphere") or obj:IsA("Clouds") then
+    -- 2. Remove Lighting Sky Fog / Post Effects
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("PostEffect") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("SunRaysEffect") then
+            obj.Enabled = false
+        end
+    end
+
+    -- 3. Clear Camera Visual Effects
+    local cam = Workspace.CurrentCamera
+    if cam then
+        for _, obj in ipairs(cam:GetChildren()) do
+            if obj:IsA("PostEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("BlurEffect") then
                 obj.Enabled = false
             end
         end
+    end
 
-        -- Water VFX Cleanup
-        if Workspace:FindFirstChildOfClass("Terrain") then
-            local terrain = Workspace:FindFirstChildOfClass("Terrain")
-            terrain.WaterWaveSize = 0
-            terrain.WaterWaveSpeed = 0
-            terrain.WaterReflectance = 0
-            terrain.WaterTransparency = 1
-        end
-
-        -- Attack & World Particles Low
-        for _, v in ipairs(Workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
-                v.Enabled = false
-            end
-        end
-    else
-        -- Restore Original Settings
-        Lighting.GlobalShadows = originalLighting.GlobalShadows
-        Lighting.FogEnd = originalLighting.FogEnd
-        Lighting.FogStart = originalLighting.FogStart
-
-        for _, obj in ipairs(Lighting:GetChildren()) do
-            if obj:IsA("PostEffect") or obj:IsA("Sky") or obj:IsA("Atmosphere") or obj:IsA("Clouds") then
-                obj.Enabled = true
-            end
-        end
-
-        if Workspace:FindFirstChildOfClass("Terrain") then
-            local terrain = Workspace:FindFirstChildOfClass("Terrain")
-            terrain.WaterWaveSize = 0.15
-            terrain.WaterWaveSpeed = 10
-            terrain.WaterReflectance = 0.05
-            terrain.WaterTransparency = 0.5
-        end
-
-        for _, v in ipairs(Workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
-                v.Enabled = true
-            end
+    -- 4. Disable All Attack VFX & World Particles
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        removeVFX(v)
+        if v:IsA("BasePart") then
+            v.CastShadow = false
         end
     end
 end
 
--- New Particle Spawns Disabled Automatically
-Workspace.DescendantAdded:Connect(function(v)
-    if fpsBoostEnabled then
-        if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
-            v.Enabled = false
+-- Continuous Loop to Keep Fog/Shadows/VFX Off (Prevents Game Auto-Reloading)
+task.spawn(function()
+    while true do
+        task.wait(1)
+        if fpsBoostEnabled then
+            pcall(processFPSBoost)
         end
     end
 end)
+
+-- Auto-disable new attack skills/spells during PvP
+Workspace.DescendantAdded:Connect(function(v)
+    if fpsBoostEnabled then
+        task.wait()
+        removeVFX(v)
+        if v:IsA("BasePart") then
+            v.CastShadow = false
+        end
+    end
+end)
+
+---------------------------------------------------------
+-- ESP & HELPER FUNCTIONS
+---------------------------------------------------------
 
 local function isFruit(obj)
     if not (obj:IsA("Tool") or string.find(obj.Name, "Fruit")) then return false end
@@ -340,7 +331,6 @@ local function checkFruitsForNotification(isNewSpawn)
     end
 end
 
--- ESP Functions
 local function removeFruitESP()
     for _, item in ipairs(fruitESPObjects) do
         if item and item.Parent then item:Destroy() end
@@ -479,7 +469,11 @@ createToggleRow("Auto Fly Collect", function(enabled)
 end)
 
 createToggleRow("FPS Boost", function(enabled)
-    applyFPSBoost(enabled)
+    fpsBoostEnabled = enabled
+    if enabled then
+        pcall(processFPSBoost)
+        sendNotification("🚀 FPS Boost", "Shadows, Fog & Attack VFX Removed!")
+    end
 end)
 
 -- Fly Collect Loop
