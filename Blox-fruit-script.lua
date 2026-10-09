@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1/4 - Auto Farm & Useful Options)
+-- MD GAMER SCRIPT (Part 1/4 - Balanced FPS Boost with Good Textures)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -19,6 +19,7 @@ local fpsBoostEnabled = false
 local autoFarmEnabled = false
 local autoQuestEnabled = false
 local fastAttackEnabled = false
+local bringMobEnabled = false
 local selectWeaponType = "Melee"
 
 local fruitESPObjects = {}
@@ -223,7 +224,7 @@ FarmContainer.Size = UDim2.new(1, -120, 1, -45)
 FarmContainer.Position = UDim2.new(0, 115, 0, 40)
 FarmContainer.BackgroundTransparency = 1
 FarmContainer.Visible = false
-FarmContainer.CanvasSize = UDim2.new(0, 0, 0, 220)
+FarmContainer.CanvasSize = UDim2.new(0, 0, 0, 250)
 FarmContainer.ScrollBarThickness = 3
 FarmContainer.Parent = MainFrame
 
@@ -371,10 +372,15 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
         callback(state)
     end)
 end
--- MD GAMER SCRIPT (Part 2/4 - Auto Farm Logic & UI Options)
+-- MD GAMER SCRIPT (Part 2/4 - Auto Farm & Quality Texture FPS Boost Logic)
 createToggleRow(FarmContainer, "Auto Level Farm", false, function(enabled)
     autoFarmEnabled = enabled
     if enabled then sendNotification("⚔️ Auto Farm", "Level Farm Activated!") end
+end)
+
+createToggleRow(FarmContainer, "Bring Mob (300m)", false, function(enabled)
+    bringMobEnabled = enabled
+    if enabled then sendNotification("📌 Bring Mob", "Enabled (Radius: 300m)") end
 end)
 
 createToggleRow(FarmContainer, "Auto Accept Quest", false, function(enabled)
@@ -480,6 +486,95 @@ task.spawn(function()
     end
 end)
 
+task.spawn(function()
+    while task.wait(0.2) do
+        if bringMobEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            pcall(function()
+                local hrp = LocalPlayer.Character.HumanoidRootPart
+                local enemiesFolder = Workspace:FindFirstChild("Enemies")
+                if enemiesFolder then
+                    for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+                        local eHRP = enemy:FindFirstChild("HumanoidRootPart")
+                        local eHum = enemy:FindFirstChildOfClass("Humanoid")
+                        if eHRP and eHum and eHum.Health > 0 then
+                            local dist = (hrp.Position - eHRP.Position).Magnitude
+                            if dist <= 300 then
+                                eHRP.CFrame = hrp.CFrame * CFrame.new(0, 0, -3)
+                                eHRP.Velocity = Vector3.zero
+                                if enemy:FindFirstChild("Head") then
+                                    enemy.Head.CanCollide = false
+                                end
+                                for _, part in ipairs(enemy:GetChildren()) do
+                                    if part:IsA("BasePart") then
+                                        part.AssemblyLinearVelocity = Vector3.zero
+                                        part.AssemblyAngularVelocity = Vector3.zero
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+---------------------------------------------------------
+-- BALANCED FPS BOOST (KEEPING GOOD TEXTURES & REMOVING LAG VFX)
+---------------------------------------------------------
+local function cleanLagEffects(v)
+    if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") or v:IsA("Beam") or v:IsA("Trail") or v:IsA("Highlight") then
+        v:Destroy()
+    elseif v:IsA("BasePart") then
+        v.CastShadow = false -- Removes shadow to boost performance while keeping textures intact
+    end
+end
+
+local function executeBalancedFPSBoost()
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.FogStart = 9e9
+
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("PostEffect") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("SunRaysEffect") then
+            obj:Destroy()
+        end
+    end
+
+    local cam = Workspace.CurrentCamera
+    if cam then
+        for _, obj in ipairs(cam:GetChildren()) do
+            if obj:IsA("PostEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("BlurEffect") then
+                obj:Destroy()
+            end
+        end
+    end
+
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        pcall(function()
+            cleanLagEffects(v)
+        end)
+    end
+end
+
+task.spawn(function()
+    while true do
+        task.wait(3)
+        if fpsBoostEnabled then
+            pcall(executeBalancedFPSBoost)
+        end
+    end
+end)
+
+Workspace.DescendantAdded:Connect(function(v)
+    if fpsBoostEnabled then
+        task.wait()
+        pcall(function()
+            cleanLagEffects(v)
+        end)
+    end
+end)
+
 local function createFruitLabel(text, isHeader)
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, -10, 0, isHeader and 26 or 22)
@@ -547,7 +642,7 @@ TabFruitBtn.MouseButton1Click:Connect(function()
     TabFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     loadRealTimeDealerStock()
 end)
--- MD GAMER SCRIPT (Part 3/4 - Server Travel UI & FPS Boost)
+-- MD GAMER SCRIPT (Part 3/4 - Server Travel UI & Toggle Bindings)
 local jobFrame = Instance.new("Frame")
 jobFrame.Size = UDim2.new(1, -10, 0, 85)
 jobFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
@@ -657,62 +752,7 @@ ServerContainer.CanvasSize = UDim2.new(0, 0, 0, 130)
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
-
-local function removeVFX(v)
-    if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") then
-        v.Enabled = false
-    elseif v:IsA("Beam") or v:IsA("Trail") then
-        v.Enabled = false
-    end
-end
-
-local function processFPSBoost()
-    Lighting.GlobalShadows = false
-    Lighting.FogEnd = 9e9
-    Lighting.FogStart = 9e9
-
-    for _, obj in ipairs(Lighting:GetChildren()) do
-        if obj:IsA("PostEffect") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("SunRaysEffect") then
-            obj.Enabled = false
-        end
-    end
-
-    local cam = Workspace.CurrentCamera
-    if cam then
-        for _, obj in ipairs(cam:GetChildren()) do
-            if obj:IsA("PostEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("BlurEffect") then
-                obj.Enabled = false
-            end
-        end
-    end
-
-    for _, v in ipairs(Workspace:GetDescendants()) do
-        removeVFX(v)
-        if v:IsA("BasePart") then
-            v.CastShadow = false
-        end
-    end
-end
-
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if fpsBoostEnabled then
-            pcall(processFPSBoost)
-        end
-    end
-end)
-
-Workspace.DescendantAdded:Connect(function(v)
-    if fpsBoostEnabled then
-        task.wait()
-        removeVFX(v)
-        if v:IsA("BasePart") then
-            v.CastShadow = false
-        end
-    end
-end)
--- MD GAMER SCRIPT (Part 4/4 - Island Teleport, ESP & Auto Collect)
+-- MD GAMER SCRIPT (Part 4/4 - Island Teleport, ESP & Final Configs)
 local function flyTo(targetCFrame)
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -948,8 +988,8 @@ end)
 createToggleRow(MainContainer, "FPS Boost", false, function(enabled)
     fpsBoostEnabled = enabled
     if enabled then
-        pcall(processFPSBoost)
-        sendNotification("🚀 FPS Boost", "Shadows, Fog & Attack VFX Removed!")
+        pcall(executeBalancedFPSBoost)
+        sendNotification("🚀 FPS Boost", "Shadows, Fog & Lag VFX Removed (Textures Safe!)")
     end
 end)
 
