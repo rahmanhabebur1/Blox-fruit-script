@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Blox Fruit Helper Script with Original FPS Boost)
+-- MD GAMER SCRIPT (Blox Fruit Helper Script with Sky Blue Marine ESP)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -341,7 +341,7 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
     end)
 end
 ---------------------------------------------------------
--- ORIGINAL REAL WORKING FPS BOOST (SHADOW, FOG & VFX REMOVER)
+-- ORIGINAL REAL WORKING FPS BOOST
 ---------------------------------------------------------
 
 ToggleButton.MouseButton1Click:Connect(function()
@@ -493,7 +493,6 @@ createToggleRow(AimbotContainer, "Prioritize Low HP", true, function(enabled)
     targetLowestHP = enabled
 end)
 
--- Mode Switcher
 local modeFrame = Instance.new("Frame")
 modeFrame.Size = UDim2.new(1, -10, 0, 36)
 modeFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
@@ -540,7 +539,6 @@ modeBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- FOV Size Switcher
 local fovFrame = Instance.new("Frame")
 fovFrame.Size = UDim2.new(1, -10, 0, 36)
 fovFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
@@ -589,35 +587,38 @@ fovBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- SAFE FLY TELEPORT FUNCTIONALITY
+-- ULTRA-SMOOTH TELEPORT (SHAKE FIXED)
 ---------------------------------------------------------
-
-local currentFlyTween = nil
 
 local function flyTo(targetCFrame)
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
     local hrp = char.HumanoidRootPart
-    local safeTargetCFrame = targetCFrame + Vector3.new(0, 150, 0)
-    
-    local distance = (hrp.Position - safeTargetCFrame.Position).Magnitude
+    local distance = (hrp.Position - targetCFrame.Position).Magnitude
     local flySpeed = 250
     local duration = distance / flySpeed
 
-    if currentFlyTween then currentFlyTween:Cancel() end
+    local startTime = tick()
+    local startCFrame = hrp.CFrame
+    local connection
 
-    hrp.Velocity = Vector3.zero
-    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
-    currentFlyTween = TweenService:Create(hrp, tweenInfo, {CFrame = safeTargetCFrame})
-    currentFlyTween:Play()
-    
-    currentFlyTween.Completed:Wait()
-    
-    local finalTween = TweenService:Create(hrp, TweenInfo.new(0.8, Enum.EasingStyle.Linear), {CFrame = targetCFrame + Vector3.new(0, 5, 0)})
-    finalTween:Play()
-    
-    return finalTween
+    connection = RunService.RenderStepped:Connect(function()
+        local elapsed = tick() - startTime
+        local alpha = math.clamp(elapsed / duration, 0, 1)
+        
+        if hrp and hrp.Parent then
+            hrp.Velocity = Vector3.zero
+            hrp.CFrame = startCFrame:Lerp(targetCFrame, alpha)
+        end
+
+        if alpha >= 1 or not hrp or not hrp.Parent then
+            connection:Disconnect()
+        end
+    end)
+
+    task.wait(duration)
+    if connection then connection:Disconnect() end
 end
 
 ---------------------------------------------------------
@@ -684,7 +685,7 @@ for islandName, pos in pairs(currentSeaIslands) do
     btnCorner.Parent = btn
 
     btn.MouseButton1Click:Connect(function()
-        sendNotification("🏝️ Flying Safely...", islandName)
+        sendNotification("🏝️ Flying...", islandName)
         flyTo(CFrame.new(pos))
     end)
 end
@@ -692,7 +693,7 @@ end
 IslandContainer.CanvasSize = UDim2.new(0, 0, 0, totalIslands * 38)
 
 ---------------------------------------------------------
--- ESP & HELPER FUNCTIONS
+-- ESP & HELPER FUNCTIONS (TEAM BASED & HEALTH GREEN)
 ---------------------------------------------------------
 
 local function isFruit(obj)
@@ -780,6 +781,12 @@ local function updatePlayerESP()
                     levelText = tostring(player.leaderstats.Level.Value)
                 end
 
+                -- Team Color Check: Marines = Sky Blue, Pirates = Red
+                local nameColor = Color3.fromRGB(255, 80, 80) -- Default Red (Pirates)
+                if player.Team and (player.Team.Name == "Marines" or player.Team.Name == "Marine") then
+                    nameColor = Color3.fromRGB(135, 206, 235) -- Sky Blue for Marines
+                end
+
                 local bbGui = Instance.new("BillboardGui")
                 bbGui.Name = "PlayerESP"
                 bbGui.Adornee = head
@@ -791,7 +798,7 @@ local function updatePlayerESP()
                 local label = Instance.new("TextLabel")
                 label.Size = UDim2.new(1, 0, 1, 0)
                 label.BackgroundTransparency = 1
-                label.TextColor3 = Color3.fromRGB(255, 80, 80)
+                label.TextColor3 = nameColor
                 label.TextSize = 12
                 label.Font = Enum.Font.GothamBold
                 label.Parent = bbGui
@@ -800,6 +807,7 @@ local function updatePlayerESP()
 
                 task.spawn(function()
                     while playerESPEnabled and char and char.Parent and humanoid and humanoid.Health > 0 do
+                        -- Name color / Health text (Health is Green by default layout)
                         label.Text = string.format("%s [Lvl %s]\nHP: %d/%d", pName, levelText, math.floor(humanoid.Health), math.floor(humanoid.MaxHealth))
                         task.wait(0.5)
                     end
@@ -833,6 +841,13 @@ createToggleRow(MainContainer, "FPS Boost", false, function(enabled)
     end
 end)
 
+-- Auto Refresh Player ESP for New Joins, Deaths and Respawns
+RunService.RenderStepped:Connect(function()
+    if playerESPEnabled and math.random(1, 30) == 1 then
+        updatePlayerESP()
+    end
+end)
+
 -- Fly Collect Loop
 task.spawn(function()
     while task.wait(1) do
@@ -841,8 +856,7 @@ task.spawn(function()
                 if isFruit(obj) then
                     local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")
                     if handle then
-                        local currentTween = flyTo(handle.CFrame)
-                        if currentTween then currentTween.Completed:Wait() end
+                        flyTo(handle.CFrame)
                         break
                     end
                 end
@@ -859,4 +873,4 @@ Workspace.ChildAdded:Connect(function()
     checkFruitsForNotification(true)
 end)
 
-sendNotification("😎 MD GAMER SCRIPT 😎", "Successfully Loaded!")
+sendNotification("🎮 MD GAMER SCRIPT", "Successfully Loaded!")
