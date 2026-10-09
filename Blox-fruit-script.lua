@@ -22,9 +22,11 @@ local fastAttackEnabled = false
 local bringMobEnabled = false
 local selectWeaponType = "Melee"
 
+-- PVP Aimbot States
 local aimbotNearestEnabled = false
 local ignoreMobsEnabled = false
 local ignorePlayersEnabled = false
+local lastAttackTime = 0
 
 local fruitESPObjects = {}
 local playerESPObjects = {}
@@ -517,8 +519,17 @@ task.spawn(function()
     end
 end)
 
+-- Detect Attack/Skills for 1.25 Seconds Lock Hold
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch or input.KeyCode == Enum.KeyCode.Z or input.KeyCode == Enum.KeyCode.X or input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.V or input.KeyCode == Enum.KeyCode.F then
+            lastAttackTime = tick()
+        end
+    end
+end)
+
 local function isAttackingOrMouseDown()
-    return UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or fastAttackEnabled
+    return UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or fastAttackEnabled or (tick() - lastAttackTime <= 1.25)
 end
 
 RunService.RenderStepped:Connect(function()
