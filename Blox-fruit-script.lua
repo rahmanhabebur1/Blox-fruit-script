@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1/3)
+-- MD GAMER SCRIPT (Part 1/4 - Auto Farm & Useful Options)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -7,6 +7,7 @@ local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
@@ -15,24 +16,14 @@ local fruitESPEnabled = false
 local playerESPEnabled = false
 local fpsBoostEnabled = false
 
-local aimbotEnabled = false
-local aimTargetMode = "Players"
-local targetLowestHP = true
-local fovRadius = 150
-local showFOV = false
+local autoFarmEnabled = false
+local autoQuestEnabled = false
+local fastAttackEnabled = false
+local selectWeaponType = "Melee"
 
 local fruitESPObjects = {}
 local playerESPObjects = {}
 local notifiedFruits = {}
-
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1.5
-FOVCircle.Color = Color3.fromRGB(0, 255, 200)
-FOVCircle.Filled = false
-FOVCircle.Transparency = 0.8
-FOVCircle.NumSides = 30
-FOVCircle.Radius = fovRadius
-FOVCircle.Visible = false
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MD_GAMER_SCRIPT_UI"
@@ -206,17 +197,20 @@ local function createTabBtn(text)
 end
 
 local TabMainBtn = createTabBtn("Main / ESP")
-local TabAimbotBtn = createTabBtn("AIMBOT 🎯")
+local TabFarmBtn = createTabBtn("AUTO FARM ⚔️")
 local TabIslandBtn = createTabBtn("ISLAND 🏝️")
 local TabFruitBtn = createTabBtn("FRUIT LIST 🍑")
+local TabServerBtn = createTabBtn("SERVER 🌐")
 
 TabMainBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 TabMainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local MainContainer = Instance.new("Frame")
+local MainContainer = Instance.new("ScrollingFrame")
 MainContainer.Size = UDim2.new(1, -120, 1, -45)
 MainContainer.Position = UDim2.new(0, 115, 0, 40)
 MainContainer.BackgroundTransparency = 1
+MainContainer.CanvasSize = UDim2.new(0, 0, 0, 200)
+MainContainer.ScrollBarThickness = 3
 MainContainer.Parent = MainFrame
 
 local UIListLayoutMain = Instance.new("UIListLayout")
@@ -224,19 +218,19 @@ UIListLayoutMain.Parent = MainContainer
 UIListLayoutMain.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutMain.Padding = UDim.new(0, 6)
 
-local AimbotContainer = Instance.new("ScrollingFrame")
-AimbotContainer.Size = UDim2.new(1, -120, 1, -45)
-AimbotContainer.Position = UDim2.new(0, 115, 0, 40)
-AimbotContainer.BackgroundTransparency = 1
-AimbotContainer.Visible = false
-AimbotContainer.CanvasSize = UDim2.new(0, 0, 0, 220)
-AimbotContainer.ScrollBarThickness = 3
-AimbotContainer.Parent = MainFrame
+local FarmContainer = Instance.new("ScrollingFrame")
+FarmContainer.Size = UDim2.new(1, -120, 1, -45)
+FarmContainer.Position = UDim2.new(0, 115, 0, 40)
+FarmContainer.BackgroundTransparency = 1
+FarmContainer.Visible = false
+FarmContainer.CanvasSize = UDim2.new(0, 0, 0, 220)
+FarmContainer.ScrollBarThickness = 3
+FarmContainer.Parent = MainFrame
 
-local UIListLayoutAim = Instance.new("UIListLayout")
-UIListLayoutAim.Parent = AimbotContainer
-UIListLayoutAim.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayoutAim.Padding = UDim.new(0, 6)
+local UIListLayoutFarm = Instance.new("UIListLayout")
+UIListLayoutFarm.Parent = FarmContainer
+UIListLayoutFarm.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutFarm.Padding = UDim.new(0, 6)
 
 local IslandContainer = Instance.new("ScrollingFrame")
 IslandContainer.Size = UDim2.new(1, -120, 1, -45)
@@ -266,19 +260,36 @@ UIListLayoutFruit.Parent = FruitContainer
 UIListLayoutFruit.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutFruit.Padding = UDim.new(0, 5)
 
+local ServerContainer = Instance.new("ScrollingFrame")
+ServerContainer.Size = UDim2.new(1, -120, 1, -45)
+ServerContainer.Position = UDim2.new(0, 115, 0, 40)
+ServerContainer.BackgroundTransparency = 1
+ServerContainer.Visible = false
+ServerContainer.CanvasSize = UDim2.new(0, 0, 0, 200)
+ServerContainer.ScrollBarThickness = 3
+ServerContainer.Parent = MainFrame
+
+local UIListLayoutServer = Instance.new("UIListLayout")
+UIListLayoutServer.Parent = ServerContainer
+UIListLayoutServer.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutServer.Padding = UDim.new(0, 6)
+
 local function resetTabs()
     MainContainer.Visible = false
-    AimbotContainer.Visible = false
+    FarmContainer.Visible = false
     IslandContainer.Visible = false
     FruitContainer.Visible = false
+    ServerContainer.Visible = false
     TabMainBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabMainBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
-    TabAimbotBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
-    TabAimbotBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    TabFarmBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    TabFarmBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabIslandBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabIslandBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabFruitBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabFruitBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    TabServerBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    TabServerBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
 end
 
 TabMainBtn.MouseButton1Click:Connect(function()
@@ -288,11 +299,11 @@ TabMainBtn.MouseButton1Click:Connect(function()
     TabMainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
-TabAimbotBtn.MouseButton1Click:Connect(function()
+TabFarmBtn.MouseButton1Click:Connect(function()
     resetTabs()
-    AimbotContainer.Visible = true
-    TabAimbotBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    TabAimbotBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    FarmContainer.Visible = true
+    TabFarmBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    TabFarmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
 TabIslandBtn.MouseButton1Click:Connect(function()
@@ -307,6 +318,13 @@ TabFruitBtn.MouseButton1Click:Connect(function()
     FruitContainer.Visible = true
     TabFruitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     TabFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
+TabServerBtn.MouseButton1Click:Connect(function()
+    resetTabs()
+    ServerContainer.Visible = true
+    TabServerBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    TabServerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
 local function createToggleRow(parentContainer, name, defaultState, callback)
@@ -353,6 +371,115 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
         callback(state)
     end)
 end
+-- MD GAMER SCRIPT (Part 2/4 - Auto Farm Logic & UI Options)
+createToggleRow(FarmContainer, "Auto Level Farm", false, function(enabled)
+    autoFarmEnabled = enabled
+    if enabled then sendNotification("⚔️ Auto Farm", "Level Farm Activated!") end
+end)
+
+createToggleRow(FarmContainer, "Auto Accept Quest", false, function(enabled)
+    autoQuestEnabled = enabled
+end)
+
+createToggleRow(FarmContainer, "Fast Attack (Hit)", false, function(enabled)
+    fastAttackEnabled = enabled
+    if enabled then sendNotification("⚡ Fast Attack", "Enabled!") end
+end)
+
+local weaponFrame = Instance.new("Frame")
+weaponFrame.Size = UDim2.new(1, -10, 0, 36)
+weaponFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+weaponFrame.Parent = FarmContainer
+
+local weaponCorner = Instance.new("UICorner")
+weaponCorner.CornerRadius = UDim.new(0, 6)
+weaponCorner.Parent = weaponFrame
+
+local weaponLabel = Instance.new("TextLabel")
+weaponLabel.Size = UDim2.new(0.5, 0, 1, 0)
+weaponLabel.Position = UDim2.new(0, 10, 0, 0)
+weaponLabel.BackgroundTransparency = 1
+weaponLabel.Text = "Select Weapon"
+weaponLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+weaponLabel.Font = Enum.Font.GothamSemibold
+weaponLabel.TextSize = 11
+weaponLabel.TextXAlignment = Enum.TextXAlignment.Left
+weaponLabel.Parent = weaponFrame
+
+local weaponBtn = Instance.new("TextButton")
+weaponBtn.Size = UDim2.new(0.4, 0, 0.65, 0)
+weaponBtn.Position = UDim2.new(0.56, 0, 0.175, 0)
+weaponBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+weaponBtn.Text = "Melee"
+weaponBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+weaponBtn.Font = Enum.Font.GothamBold
+weaponBtn.TextSize = 10
+weaponBtn.Parent = weaponFrame
+
+local weaponBtnCorner = Instance.new("UICorner")
+weaponBtnCorner.CornerRadius = UDim.new(0, 5)
+weaponBtnCorner.Parent = weaponBtn
+
+weaponBtn.MouseButton1Click:Connect(function()
+    if selectWeaponType == "Melee" then
+        selectWeaponType = "Sword"
+        weaponBtn.Text = "Sword"
+        weaponBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+    elseif selectWeaponType == "Sword" then
+        selectWeaponType = "Blox Fruit"
+        weaponBtn.Text = "Blox Fruit"
+        weaponBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 255)
+    else
+        selectWeaponType = "Melee"
+        weaponBtn.Text = "Melee"
+        weaponBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    end
+end)
+
+local function equipSelectedWeapon()
+    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+    local char = LocalPlayer.Character
+    if not backpack or not char then return end
+
+    for _, tool in ipairs(backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            if selectWeaponType == "Melee" and (tool.ToolTip == "Melee" or string.find(tool.Name, "Combat") or string.find(tool.Name, "Step") or string.find(tool.Name, "Claw") or string.find(tool.Name, "Talon") or string.find(tool.Name, "Human") or string.find(tool.Name, "Superhuman") or string.find(tool.Name, "Godhuman")) then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then hum:EquipTool(tool) end
+                break
+            elseif selectWeaponType == "Sword" and tool.ToolTip == "Sword" then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then hum:EquipTool(tool) end
+                break
+            elseif selectWeaponType == "Blox Fruit" and tool.ToolTip == "Blox Fruit" then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then hum:EquipTool(tool) end
+                break
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if autoFarmEnabled then
+            pcall(equipSelectedWeapon)
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.2) do
+        if fastAttackEnabled then
+            pcall(function()
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+            end)
+        end
+    end
+end)
+
 local function createFruitLabel(text, isHeader)
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, -10, 0, isHeader and 26 or 22)
@@ -372,7 +499,7 @@ local function loadRealTimeDealerStock()
         end
     end
 
-    createFruitLabel("⭐ Advance Fruit Stock (Live)", true)
+    createFruitLabel("⭐ Advance Fruit Stock (Available)", true)
 
     local success, res = pcall(function()
         return ReplicatedStorage.Remotes.CommF_:InvokeServer("GetFruits")
@@ -380,36 +507,33 @@ local function loadRealTimeDealerStock()
 
     local count = 1
     if success and type(res) == "table" then
-        if res.AdvancedStock and #res.AdvancedStock > 0 then
-            for _, fruitData in ipairs(res.AdvancedStock) do
-                local fName = type(fruitData) == "table" and (fruitData.Name or fruitData[1]) or tostring(fruitData)
-                local fPrice = type(fruitData) == "table" and (fruitData.Price or fruitData[2]) or ""
-                local displayStr = fPrice ~= "" and string.format("   • %s - $%s", tostring(fName), tostring(fPrice)) or string.format("   • %s", tostring(fName))
-                createFruitLabel(displayStr, false)
-                count = count + 1
+        local function displayAvailableCategory(stockTable)
+            if stockTable and type(stockTable) == "table" then
+                for _, fruitData in ipairs(stockTable) do
+                    local fName, fPrice = "", ""
+                    if type(fruitData) == "table" then
+                        fName = tostring(fruitData.Name or fruitData[1] or "")
+                        fPrice = tostring(fruitData.Price or fruitData[2] or "")
+                    else
+                        fName = tostring(fruitData)
+                    end
+                    if fName ~= "" and fName ~= "nil" then
+                        local displayStr = fPrice ~= "" and string.format("   • %s - $%s", fName, fPrice) or string.format("   • %s", fName)
+                        createFruitLabel(displayStr, false)
+                        count = count + 1
+                    end
+                end
             end
-        else
-            createFruitLabel("   • No Advanced Stock Available", false)
-            count = count + 1
         end
 
-        createFruitLabel("📦 Normal Fruit Stock (Live)", true)
+        displayAvailableCategory(res.AdvancedStock or res.Advanced or res.AdvStock)
+        
+        createFruitLabel("📦 Normal Fruit Stock (Available)", true)
         count = count + 1
-
-        if res.NormalStock and #res.NormalStock > 0 then
-            for _, fruitData in ipairs(res.NormalStock) do
-                local fName = type(fruitData) == "table" and (fruitData.Name or fruitData[1]) or tostring(fruitData)
-                local fPrice = type(fruitData) == "table" and (fruitData.Price or fruitData[2]) or ""
-                local displayStr = fPrice ~= "" and string.format("   • %s - $%s", tostring(fName), tostring(fPrice)) or string.format("   • %s", tostring(fName))
-                createFruitLabel(displayStr, false)
-                count = count + 1
-            end
-        else
-            createFruitLabel("   • No Normal Stock Available", false)
-            count = count + 1
-        end
+        
+        displayAvailableCategory(res.NormalStock or res.Normal or res.StandardStock)
     else
-        createFruitLabel("   • Failed to fetch live dealer stock!", false)
+        createFruitLabel("   • Failed to fetch live stock!", false)
         count = count + 1
     end
 
@@ -423,6 +547,112 @@ TabFruitBtn.MouseButton1Click:Connect(function()
     TabFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     loadRealTimeDealerStock()
 end)
+-- MD GAMER SCRIPT (Part 3/4 - Server Travel UI & FPS Boost)
+local jobFrame = Instance.new("Frame")
+jobFrame.Size = UDim2.new(1, -10, 0, 85)
+jobFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+jobFrame.Parent = ServerContainer
+
+local jobCorner = Instance.new("UICorner")
+jobCorner.CornerRadius = UDim.new(0, 6)
+jobCorner.Parent = jobFrame
+
+local jobTitle = Instance.new("TextLabel")
+jobTitle.Size = UDim2.new(1, -10, 0, 22)
+jobTitle.Position = UDim2.new(0, 8, 0, 4)
+jobTitle.BackgroundTransparency = 1
+jobTitle.Text = "Server Travel [JobID]"
+jobTitle.TextColor3 = Color3.fromRGB(0, 255, 200)
+jobTitle.Font = Enum.Font.GothamBold
+jobTitle.TextSize = 11
+jobTitle.TextXAlignment = Enum.TextXAlignment.Left
+jobTitle.Parent = jobFrame
+
+local jobInputBox = Instance.new("TextBox")
+jobInputBox.Size = UDim2.new(1, -16, 0, 28)
+jobInputBox.Position = UDim2.new(0, 8, 0, 28)
+jobInputBox.BackgroundColor3 = Color3.fromRGB(15, 15, 24)
+jobInputBox.PlaceholderText = "Paste JobID Here..."
+jobInputBox.Text = ""
+jobInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+jobInputBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 150)
+jobInputBox.Font = Enum.Font.Gotham
+jobInputBox.TextSize = 11
+jobInputBox.Parent = jobFrame
+
+local jobInputCorner = Instance.new("UICorner")
+jobInputCorner.CornerRadius = UDim.new(0, 4)
+jobInputCorner.Parent = jobInputBox
+
+local clearBtn = Instance.new("TextButton")
+clearBtn.Size = UDim2.new(0.46, 0, 0, 22)
+clearBtn.Position = UDim2.new(0, 8, 0, 60)
+clearBtn.BackgroundColor3 = Color3.fromRGB(60, 40, 60)
+clearBtn.Text = "Clear"
+clearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+clearBtn.Font = Enum.Font.GothamBold
+clearBtn.TextSize = 10
+clearBtn.Parent = jobFrame
+
+local clearCorner = Instance.new("UICorner")
+clearCorner.CornerRadius = UDim.new(0, 4)
+clearCorner.Parent = clearBtn
+
+local confirmBtn = Instance.new("TextButton")
+confirmBtn.Size = UDim2.new(0.46, 0, 0, 22)
+confirmBtn.Position = UDim2.new(0.52, 0, 0, 60)
+confirmBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+confirmBtn.Text = "Confirm (TP)"
+confirmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+confirmBtn.Font = Enum.Font.GothamBold
+confirmBtn.TextSize = 10
+confirmBtn.Parent = jobFrame
+
+local confirmCorner = Instance.new("UICorner")
+confirmCorner.CornerRadius = UDim.new(0, 4)
+confirmCorner.Parent = confirmBtn
+
+clearBtn.MouseButton1Click:Connect(function()
+    jobInputBox.Text = ""
+    sendNotification("🌐 Server Travel", "JobID Cleared!")
+end)
+
+confirmBtn.MouseButton1Click:Connect(function()
+    local targetJobID = jobInputBox.Text
+    if targetJobID and targetJobID ~= "" then
+        sendNotification("🌐 Connecting...", "Teleporting to Server JobID...")
+        pcall(function()
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, targetJobID, LocalPlayer)
+        end)
+    else
+        sendNotification("⚠️ Error", "Please enter a valid JobID!")
+    end
+end)
+
+local copyJobBtn = Instance.new("TextButton")
+copyJobBtn.Size = UDim2.new(1, -10, 0, 32)
+copyJobBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+copyJobBtn.Text = "  📋 Copy Current Job ID"
+copyJobBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+copyJobBtn.Font = Enum.Font.GothamSemibold
+copyJobBtn.TextSize = 11
+copyJobBtn.TextXAlignment = Enum.TextXAlignment.Left
+copyJobBtn.Parent = ServerContainer
+
+local copyJobCorner = Instance.new("UICorner")
+copyJobCorner.CornerRadius = UDim.new(0, 6)
+copyJobCorner.Parent = copyJobBtn
+
+copyJobBtn.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard(game.JobId)
+        sendNotification("📋 Copied!", "Current Server JobID copied to clipboard.")
+    else
+        sendNotification("⚠️ Error", "Clipboard not supported by executor!")
+    end
+end)
+
+ServerContainer.CanvasSize = UDim2.new(0, 0, 0, 130)
 
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
@@ -482,181 +712,7 @@ Workspace.DescendantAdded:Connect(function(v)
         end
     end
 end)
-
-local function getClosestTarget()
-    local closest = nil
-    local shortestDist = fovRadius
-    local lowestHP = math.huge
-
-    local camera = Workspace.CurrentCamera
-    local mousePos = Vector2.new(Mouse.X, Mouse.Y)
-
-    if aimTargetMode == "Players" then
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local hum = player.Character:FindFirstChildOfClass("Humanoid")
-                if hum and hum.Health > 0 then
-                    local screenPos, onScreen = camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
-                    if onScreen then
-                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                        if dist <= fovRadius then
-                            if targetLowestHP then
-                                if hum.Health < lowestHP then
-                                    lowestHP = hum.Health
-                                    closest = player.Character.HumanoidRootPart
-                                end
-                            else
-                                if dist < shortestDist then
-                                    shortestDist = dist
-                                    closest = player.Character.HumanoidRootPart
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    else
-        for _, npc in ipairs(Workspace.Enemies:GetChildren()) do
-            if npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChildOfClass("Humanoid") then
-                local hum = npc:FindFirstChildOfClass("Humanoid")
-                if hum and hum.Health > 0 then
-                    local screenPos, onScreen = camera:WorldToViewportPoint(npc.HumanoidRootPart.Position)
-                    if onScreen then
-                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                        if dist <= fovRadius then
-                            if dist < shortestDist then
-                                shortestDist = dist
-                                closest = npc.HumanoidRootPart
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    return closest
-end
-
-RunService.RenderStepped:Connect(function()
-    FOVCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
-    FOVCircle.Radius = fovRadius
-    FOVCircle.Visible = showFOV
-
-    if aimbotEnabled then
-        local target = getClosestTarget()
-        if target then
-            Workspace.CurrentCamera.CFrame = CFrame.new(Workspace.CurrentCamera.CFrame.Position, target.Position)
-        end
-    end
-end)
-
-createToggleRow(AimbotContainer, "Silent Aim / Lock", false, function(enabled)
-    aimbotEnabled = enabled
-    if enabled then sendNotification("🎮 MD GAMER", "Aimbot Activated!") end
-end)
-
-createToggleRow(AimbotContainer, "Show FOV Circle", false, function(enabled)
-    showFOV = enabled
-end)
-
-createToggleRow(AimbotContainer, "Prioritize Low HP", true, function(enabled)
-    targetLowestHP = enabled
-end)
-
-local modeFrame = Instance.new("Frame")
-modeFrame.Size = UDim2.new(1, -10, 0, 36)
-modeFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
-modeFrame.Parent = AimbotContainer
-
-local modeCorner = Instance.new("UICorner")
-modeCorner.CornerRadius = UDim.new(0, 6)
-modeCorner.Parent = modeFrame
-
-local modeLabel = Instance.new("TextLabel")
-modeLabel.Size = UDim2.new(0.5, 0, 1, 0)
-modeLabel.Position = UDim2.new(0, 10, 0, 0)
-modeLabel.BackgroundTransparency = 1
-modeLabel.Text = "Target Mode"
-modeLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-modeLabel.Font = Enum.Font.GothamSemibold
-modeLabel.TextSize = 11
-modeLabel.TextXAlignment = Enum.TextXAlignment.Left
-modeLabel.Parent = modeFrame
-
-local modeBtn = Instance.new("TextButton")
-modeBtn.Size = UDim2.new(0.4, 0, 0.65, 0)
-modeBtn.Position = UDim2.new(0.56, 0, 0.175, 0)
-modeBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-modeBtn.Text = "Players"
-modeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-modeBtn.Font = Enum.Font.GothamBold
-modeBtn.TextSize = 10
-modeBtn.Parent = modeFrame
-
-local modeBtnCorner = Instance.new("UICorner")
-modeBtnCorner.CornerRadius = UDim.new(0, 5)
-modeBtnCorner.Parent = modeBtn
-
-modeBtn.MouseButton1Click:Connect(function()
-    if aimTargetMode == "Players" then
-        aimTargetMode = "NPCs"
-        modeBtn.Text = "NPCs / Mobs"
-        modeBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-    else
-        aimTargetMode = "Players"
-        modeBtn.Text = "Players"
-        modeBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    end
-end)
-
-local fovFrame = Instance.new("Frame")
-fovFrame.Size = UDim2.new(1, -10, 0, 36)
-fovFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
-fovFrame.Parent = AimbotContainer
-
-local fovCorner = Instance.new("UICorner")
-fovCorner.CornerRadius = UDim.new(0, 6)
-fovCorner.Parent = fovFrame
-
-local fovLabel = Instance.new("TextLabel")
-fovLabel.Size = UDim2.new(0.5, 0, 1, 0)
-fovLabel.Position = UDim2.new(0, 10, 0, 0)
-fovLabel.BackgroundTransparency = 1
-fovLabel.Text = "FOV Size"
-fovLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-fovLabel.Font = Enum.Font.GothamSemibold
-fovLabel.TextSize = 11
-fovLabel.TextXAlignment = Enum.TextXAlignment.Left
-fovLabel.Parent = fovFrame
-
-local fovBtn = Instance.new("TextButton")
-fovBtn.Size = UDim2.new(0.4, 0, 0.65, 0)
-fovBtn.Position = UDim2.new(0.56, 0, 0.175, 0)
-fovBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-fovBtn.Text = "Medium (150)"
-fovBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
-fovBtn.Font = Enum.Font.GothamBold
-fovBtn.TextSize = 10
-fovBtn.Parent = fovFrame
-
-local fovBtnCorner = Instance.new("UICorner")
-fovBtnCorner.CornerRadius = UDim.new(0, 5)
-fovBtnCorner.Parent = fovBtn
-
-fovBtn.MouseButton1Click:Connect(function()
-    if fovRadius == 150 then
-        fovRadius = 250
-        fovBtn.Text = "Large (250)"
-    elseif fovRadius == 250 then
-        fovRadius = 100
-        fovBtn.Text = "Small (100)"
-    else
-        fovRadius = 150
-        fovBtn.Text = "Medium (150)"
-    end
-end)
+-- MD GAMER SCRIPT (Part 4/4 - Island Teleport, ESP & Auto Collect)
 local function flyTo(targetCFrame)
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
