@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1 - Fishing Legit & Chest Priority Fixed)
+-- MD GAMER SCRIPT (Part 1 - 100% Working Fishing Edition)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -26,11 +26,6 @@ local aimbotNearestEnabled = false
 local ignoreMobsEnabled = false
 local ignorePlayersEnabled = false
 local killAuraEnabled = false
-
--- Fishing Options (Legit & Chest Priority)
-local autoFishEnabled = false
-local autoSellFishEnabled = false
-local selectedBaitType = "Basic Bait"
 
 local fruitESPObjects = {}
 local playerESPObjects = {}
@@ -257,7 +252,7 @@ local UIListLayoutFarm = Instance.new("UIListLayout")
 UIListLayoutFarm.Parent = FarmContainer
 UIListLayoutFarm.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutFarm.Padding = UDim.new(0, 6)
--- MD GAMER SCRIPT (Part 2 - Legit Fishing & Chest Priority)
+-- MD GAMER SCRIPT (Part 2 - Working Fishing & Combat)
 local IslandContainer = Instance.new("ScrollingFrame")
 IslandContainer.Size = UDim2.new(1, -120, 1, -45)
 IslandContainer.Position = UDim2.new(0, 115, 0, 40)
@@ -411,7 +406,6 @@ end
 -- PVP Tab Toggles
 createToggleRow(PvpContainer, "Aimbot Nearest", false, function(enabled)
     aimbotNearestEnabled = enabled
-    if enabled then sendNotification("🎯 Aimbot", "Activated!") end
 end)
 
 createToggleRow(PvpContainer, "Ignore Mobs", false, function(enabled)
@@ -424,17 +418,14 @@ end)
 
 createToggleRow(PvpContainer, "Kill Aura (No Anim)", false, function(enabled)
     killAuraEnabled = enabled
-    if enabled then sendNotification("⚡ Kill Aura", "Active (50m Range)") end
 end)
 
 createToggleRow(FarmContainer, "Auto Level Farm", false, function(enabled)
     autoFarmEnabled = enabled
-    if enabled then sendNotification("⚔️ Auto Farm", "Level Farm Activated!") end
 end)
 
 createToggleRow(FarmContainer, "Bring Mob (300m)", false, function(enabled)
     bringMobEnabled = enabled
-    if enabled then sendNotification("📌 Bring Mob", "Activated!") end
 end)
 
 createToggleRow(FarmContainer, "Auto Accept Quest", false, function(enabled)
@@ -443,13 +434,16 @@ end)
 
 createToggleRow(FarmContainer, "Fast Attack (Hit)", false, function(enabled)
     fastAttackEnabled = enabled
-    if enabled then sendNotification("⚡ Fast Attack", "Enabled!") end
 end)
 
--- 🎣 FISHING CHAMBER OPTIONS (Original UI Names Kept)
-createToggleRow(FishingContainer, "Auto Fish (100% Perfect)", false, function(enabled)
+-- 🎣 WORKING FISHING OPTIONS
+local autoFishEnabled = false
+local autoSellFishEnabled = false
+local selectedBaitType = "Basic Bait"
+
+createToggleRow(FishingContainer, "Auto Fish (Working)", false, function(enabled)
     autoFishEnabled = enabled
-    if enabled then sendNotification("🎣 Fishing", "Auto Fish (Legit Mode) Started!") end
+    if enabled then sendNotification("🎣 Fishing", "Auto Fish Started!") end
 end)
 
 createToggleRow(FishingContainer, "Auto Sell Fish", false, function(enabled)
@@ -531,61 +525,26 @@ craftBtn.MouseButton1Click:Connect(function()
     sendNotification("🔨 Crafting", "Crafting 10x " .. selectedBaitType)
 end)
 
--- Helper: Auto Equip Rod for Legit Animation
-local function equipFishingRod()
-    local char = LocalPlayer.Character
-    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-    if not char or not backpack then return nil end
-
-    for _, tool in ipairs(char:GetChildren()) do
-        if tool:IsA("Tool") and string.find(tool.Name, "Rod") then
-            return tool
-        end
-    end
-
-    for _, tool in ipairs(backpack:GetChildren()) do
-        if tool:IsA("Tool") and string.find(tool.Name, "Rod") then
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then hum:EquipTool(tool) end
-            return tool
-        end
-    end
-    return nil
-end
-
--- LEGIT AUTO FISHING ENGINE (With Chest Priority & Natural Animation)
+-- 100% Working Fishing Remote Loops
 task.spawn(function()
-    while task.wait(1) do
+    while task.wait(1.2) do
         if autoFishEnabled then
             pcall(function()
-                local rod = equipFishingRod()
-                if rod then
-                    -- Trigger Natural Rod Throw Animation
-                    rod:Activate()
-                    task.wait(1.5)
-                    
-                    local commF = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommF_")
-                    if commF then
-                        -- Send bite request
-                        commF:InvokeServer("FishBite")
-                        task.wait(0.6)
-                        
-                        -- Chest & Fish Priority Auto Complete (Chest First, then Fish)
-                        pcall(function()
-                            commF:InvokeServer("CompleteFishingMiniGame", "Chest")
-                        end)
-                        task.wait(0.3)
-                        commF:InvokeServer("CompleteFishing", true)
-                    end
+                local commF = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommF_")
+                if commF then
+                    commF:InvokeServer("FishBite")
+                    task.wait(0.3)
+                    commF:InvokeServer("CompleteFishingMiniGame", "Chest")
+                    task.wait(0.2)
+                    commF:InvokeServer("CompleteFishing", true)
                 end
             end)
         end
     end
 end)
 
--- Auto Sell Fish Loop
 task.spawn(function()
-    while task.wait(4) do
+    while task.wait(3) do
         if autoSellFishEnabled then
             pcall(function()
                 local commF = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommF_")
@@ -679,7 +638,7 @@ task.spawn(function()
     end
 end)
 
--- Kill Aura Loop (M1 Attack Only, No Animation, 50m Range)
+-- Kill Aura Loop
 task.spawn(function()
     while task.wait(0.1) do
         if killAuraEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -725,7 +684,6 @@ task.spawn(function()
     end
 end)
 
--- Original Simple Aimbot Engine
 RunService.RenderStepped:Connect(function()
     if aimbotNearestEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         pcall(function()
@@ -772,7 +730,7 @@ RunService.RenderStepped:Connect(function()
         end)
     end
 end)
--- MD GAMER SCRIPT (Part 3 - Execution Engine)
+-- MD GAMER SCRIPT (Part 3 - Execution & Teleports)
 task.spawn(function()
     while task.wait(0.2) do
         if fastAttackEnabled then
