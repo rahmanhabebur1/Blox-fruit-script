@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1 - Kill Aura Updated)
+-- MD GAMER SCRIPT (Part 1 - Fishing Chamber Added)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -26,6 +26,11 @@ local aimbotNearestEnabled = false
 local ignoreMobsEnabled = false
 local ignorePlayersEnabled = false
 local killAuraEnabled = false
+
+-- Fishing Options
+local autoFishEnabled = false
+local autoSellFishEnabled = false
+local selectedBaitType = "Basic Bait"
 
 local fruitESPObjects = {}
 local playerESPObjects = {}
@@ -206,7 +211,7 @@ local TabMainBtn = createTabBtn("Main / ESP")
 local TabPvpBtn = createTabBtn("PVP ☠️")
 local TabFarmBtn = createTabBtn("AUTO FARM ⚔️")
 local TabIslandBtn = createTabBtn("ISLAND 🏝️")
-local TabFruitBtn = createTabBtn("FRUIT LIST 🍑")
+local TabFishingBtn = createTabBtn("FISHING 🎣")
 local TabServerBtn = createTabBtn("SERVER 🌐")
 
 TabMainBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
@@ -252,7 +257,7 @@ local UIListLayoutFarm = Instance.new("UIListLayout")
 UIListLayoutFarm.Parent = FarmContainer
 UIListLayoutFarm.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutFarm.Padding = UDim.new(0, 6)
--- MD GAMER SCRIPT (Part 2 - Kill Aura & M1 Engine)
+-- MD GAMER SCRIPT (Part 2 - Fishing Chamber Logic)
 local IslandContainer = Instance.new("ScrollingFrame")
 IslandContainer.Size = UDim2.new(1, -120, 1, -45)
 IslandContainer.Position = UDim2.new(0, 115, 0, 40)
@@ -267,19 +272,19 @@ UIListLayoutIsland.Parent = IslandContainer
 UIListLayoutIsland.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutIsland.Padding = UDim.new(0, 6)
 
-local FruitContainer = Instance.new("ScrollingFrame")
-FruitContainer.Size = UDim2.new(1, -120, 1, -45)
-FruitContainer.Position = UDim2.new(0, 115, 0, 40)
-FruitContainer.BackgroundTransparency = 1
-FruitContainer.Visible = false
-FruitContainer.CanvasSize = UDim2.new(0, 0, 0, 400)
-FruitContainer.ScrollBarThickness = 3
-FruitContainer.Parent = MainFrame
+local FishingContainer = Instance.new("ScrollingFrame")
+FishingContainer.Size = UDim2.new(1, -120, 1, -45)
+FishingContainer.Position = UDim2.new(0, 115, 0, 40)
+FishingContainer.BackgroundTransparency = 1
+FishingContainer.Visible = false
+FishingContainer.CanvasSize = UDim2.new(0, 0, 0, 240)
+FishingContainer.ScrollBarThickness = 3
+FishingContainer.Parent = MainFrame
 
-local UIListLayoutFruit = Instance.new("UIListLayout")
-UIListLayoutFruit.Parent = FruitContainer
-UIListLayoutFruit.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayoutFruit.Padding = UDim.new(0, 5)
+local UIListLayoutFishing = Instance.new("UIListLayout")
+UIListLayoutFishing.Parent = FishingContainer
+UIListLayoutFishing.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutFishing.Padding = UDim.new(0, 6)
 
 local ServerContainer = Instance.new("ScrollingFrame")
 ServerContainer.Size = UDim2.new(1, -120, 1, -45)
@@ -300,7 +305,7 @@ local function resetTabs()
     PvpContainer.Visible = false
     FarmContainer.Visible = false
     IslandContainer.Visible = false
-    FruitContainer.Visible = false
+    FishingContainer.Visible = false
     ServerContainer.Visible = false
     TabMainBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabMainBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
@@ -310,8 +315,8 @@ local function resetTabs()
     TabFarmBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabIslandBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabIslandBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
-    TabFruitBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
-    TabFruitBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    TabFishingBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    TabFishingBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabServerBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabServerBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
 end
@@ -344,11 +349,11 @@ TabIslandBtn.MouseButton1Click:Connect(function()
     TabIslandBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
-TabFruitBtn.MouseButton1Click:Connect(function()
+TabFishingBtn.MouseButton1Click:Connect(function()
     resetTabs()
-    FruitContainer.Visible = true
-    TabFruitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    TabFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    FishingContainer.Visible = true
+    TabFishingBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    TabFishingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
 TabServerBtn.MouseButton1Click:Connect(function()
@@ -439,6 +444,120 @@ end)
 createToggleRow(FarmContainer, "Fast Attack (Hit)", false, function(enabled)
     fastAttackEnabled = enabled
     if enabled then sendNotification("⚡ Fast Attack", "Enabled!") end
+end)
+
+-- 🎣 FISHING CHAMBER OPTIONS
+createToggleRow(FishingContainer, "Auto Fish (100% Perfect)", false, function(enabled)
+    autoFishEnabled = enabled
+    if enabled then sendNotification("🎣 Fishing", "Auto Fish Activated!") end
+end)
+
+createToggleRow(FishingContainer, "Auto Sell Fish", false, function(enabled)
+    autoSellFishEnabled = enabled
+    if enabled then sendNotification("💰 Fishing", "Auto Sell Fish Enabled!") end
+end)
+
+local baitFrame = Instance.new("Frame")
+baitFrame.Size = UDim2.new(1, -10, 0, 36)
+baitFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+baitFrame.Parent = FishingContainer
+
+local baitCorner = Instance.new("UICorner")
+baitCorner.CornerRadius = UDim.new(0, 6)
+baitCorner.Parent = baitFrame
+
+local baitLabel = Instance.new("TextLabel")
+baitLabel.Size = UDim2.new(0.5, 0, 1, 0)
+baitLabel.Position = UDim2.new(0, 10, 0, 0)
+baitLabel.BackgroundTransparency = 1
+baitLabel.Text = "Select Bait"
+baitLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+baitLabel.Font = Enum.Font.GothamSemibold
+baitLabel.TextSize = 11
+baitLabel.TextXAlignment = Enum.TextXAlignment.Left
+baitLabel.Parent = baitFrame
+
+local baitBtn = Instance.new("TextButton")
+baitBtn.Size = UDim2.new(0.4, 0, 0.65, 0)
+baitBtn.Position = UDim2.new(0.56, 0, 0.175, 0)
+baitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+baitBtn.Text = "Basic Bait"
+baitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+baitBtn.Font = Enum.Font.GothamBold
+baitBtn.TextSize = 10
+baitBtn.Parent = baitFrame
+
+local baitBtnCorner = Instance.new("UICorner")
+baitBtnCorner.CornerRadius = UDim.new(0, 5)
+baitBtnCorner.Parent = baitBtn
+
+baitBtn.MouseButton1Click:Connect(function()
+    if selectedBaitType == "Basic Bait" then
+        selectedBaitType = "Rare Bait"
+        baitBtn.Text = "Rare Bait"
+        baitBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+    elseif selectedBaitType == "Rare Bait" then
+        selectedBaitType = "Ultra Bait"
+        baitBtn.Text = "Ultra Bait"
+        baitBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 255)
+    else
+        selectedBaitType = "Basic Bait"
+        baitBtn.Text = "Basic Bait"
+        baitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    end
+end)
+
+local craftBtn = Instance.new("TextButton")
+craftBtn.Size = UDim2.new(1, -10, 0, 32)
+craftBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+craftBtn.Text = "  🔨 Auto Craft Bait (x10)"
+craftBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+craftBtn.Font = Enum.Font.GothamSemibold
+craftBtn.TextSize = 11
+craftBtn.TextXAlignment = Enum.TextXAlignment.Left
+craftBtn.Parent = FishingContainer
+
+local craftCorner = Instance.new("UICorner")
+craftCorner.CornerRadius = UDim.new(0, 6)
+craftCorner.Parent = craftBtn
+
+craftBtn.MouseButton1Click:Connect(function()
+    pcall(function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("CraftBait", selectedBaitType, 10)
+    end)
+    sendNotification("🔨 Crafting", "Crafting 10x " .. selectedBaitType)
+end)
+
+-- Auto Fishing Execution Loop
+task.spawn(function()
+    while task.wait(0.5) do
+        if autoFishEnabled then
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char then
+                    local rod = char:FindFirstChildOfClass("Tool")
+                    if rod and string.find(rod.Name, "Rod") then
+                        rod:Activate()
+                        -- Auto Bypass Fishing Mini-Game Complete
+                        task.wait(1)
+                        ReplicatedStorage.Remotes.CommF_:InvokeServer("FishBite", true)
+                        ReplicatedStorage.Remotes.CommF_:InvokeServer("CompleteFishing", true)
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- Auto Sell Fish Execution Loop
+task.spawn(function()
+    while task.wait(3) do
+        if autoSellFishEnabled then
+            pcall(function()
+                ReplicatedStorage.Remotes.CommF_:InvokeServer("SellAllFish")
+            end)
+        end
+    end
 end)
 
 local weaponFrame = Instance.new("Frame")
@@ -532,7 +651,6 @@ task.spawn(function()
                 local hrp = char.HumanoidRootPart
                 local equippedTool = char:FindFirstChildOfClass("Tool")
 
-                -- Only proceed if a weapon is actually equipped
                 if equippedTool then
                     local function checkAndAttack(targetHRP)
                         local dist = (hrp.Position - targetHRP.Position).Magnitude
@@ -708,74 +826,6 @@ Workspace.DescendantAdded:Connect(function(v)
             cleanLagEffects(v)
         end)
     end
-end)
-
-local function createFruitLabel(text, isHeader)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -10, 0, isHeader and 26 or 22)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = text
-    lbl.TextColor3 = isHeader and Color3.fromRGB(0, 255, 200) or Color3.fromRGB(220, 220, 220)
-    lbl.Font = isHeader and Enum.Font.GothamBold or Enum.Font.GothamSemibold
-    lbl.TextSize = isHeader and 12 or 11
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = FruitContainer
-end
-
-local function loadRealTimeDealerStock()
-    for _, child in ipairs(FruitContainer:GetChildren()) do
-        if child:IsA("TextLabel") then
-            child:Destroy()
-        end
-    end
-
-    createFruitLabel("⭐ Advance Fruit Stock (Available)", true)
-
-    local success, res = pcall(function()
-        return ReplicatedStorage.Remotes.CommF_:InvokeServer("GetFruits")
-    end)
-
-    local count = 1
-    if success and type(res) == "table" then
-        local function displayAvailableCategory(stockTable)
-            if stockTable and type(stockTable) == "table" then
-                for _, fruitData in ipairs(stockTable) do
-                    local fName, fPrice = "", ""
-                    if type(fruitData) == "table" then
-                        fName = tostring(fruitData.Name or fruitData[1] or "")
-                        fPrice = tostring(fruitData.Price or fruitData[2] or "")
-                    else
-                        fName = tostring(fruitData)
-                    end
-                    if fName ~= "" and fName ~= "nil" then
-                        local displayStr = fPrice ~= "" and string.format("   • %s - $%s", fName, fPrice) or string.format("   • %s", fName)
-                        createFruitLabel(displayStr, false)
-                        count = count + 1
-                    end
-                end
-            end
-        end
-
-        displayAvailableCategory(res.AdvancedStock or res.Advanced or res.AdvStock)
-        
-        createFruitLabel("📦 Normal Fruit Stock (Available)", true)
-        count = count + 1
-        
-        displayAvailableCategory(res.NormalStock or res.Normal or res.StandardStock)
-    else
-        createFruitLabel("   • Failed to fetch live stock!", false)
-        count = count + 1
-    end
-
-    FruitContainer.CanvasSize = UDim2.new(0, 0, 0, count * 24)
-end
-
-TabFruitBtn.MouseButton1Click:Connect(function()
-    resetTabs()
-    FruitContainer.Visible = true
-    TabFruitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    TabFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    loadRealTimeDealerStock()
 end)
 
 local jobFrame = Instance.new("Frame")
