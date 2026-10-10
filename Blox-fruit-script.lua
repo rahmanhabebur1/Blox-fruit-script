@@ -519,7 +519,7 @@ task.spawn(function()
     end
 end)
 
--- Detect Attack/Skills for 1.25 Seconds Lock Hold
+-- Track Input Time for Lock Hold
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed then
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch or input.KeyCode == Enum.KeyCode.Z or input.KeyCode == Enum.KeyCode.X or input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.V or input.KeyCode == Enum.KeyCode.F then
@@ -531,6 +531,56 @@ end)
 local function isAttackingOrMouseDown()
     return UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or fastAttackEnabled or (tick() - lastAttackTime <= 1.25)
 end
+
+-- Hook Mouse Hit/Target so skill attacks lock directly onto enemy position
+local originalNamecall
+originalNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    if aimbotNearestEnabled and isAttackingOrMouseDown() and (method == "FindPartOnWithIgnoreList" or method == "Raycast") then
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local nearestTarget = nil
+            local shortestDist = math.huge
+
+            if not ignorePlayersEnabled then
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        local pHum = player.Character:FindFirstChildOfClass("Humanoid")
+                        if pHum and pHum.Health > 0 then
+                            local dist = (hrp.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                            if dist < shortestDist then
+                                shortestDist = dist
+                                nearestTarget = player.Character.HumanoidRootPart
+                            end
+                        end
+                    end
+                end
+            end
+
+            if not ignoreMobsEnabled then
+                local enemiesFolder = Workspace:FindFirstChild("Enemies")
+                if enemiesFolder then
+                    for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+                        local eHRP = enemy:FindFirstChild("HumanoidRootPart")
+                        local eHum = enemy:FindFirstChildOfClass("Humanoid")
+                        if eHRP and eHum and eHum.Health > 0 then
+                            local dist = (hrp.Position - eHRP.Position).Magnitude
+                            if dist < shortestDist then
+                                shortestDist = dist
+                                nearestTarget = eHRP
+                            end
+                        end
+                    end
+                end
+            end
+
+            if nearestTarget then
+                Mouse.Hit = nearestTarget.CFrame
+            end
+        end
+    end
+    return originalNamecall(self, ...)
+end)
 
 RunService.RenderStepped:Connect(function()
     if aimbotNearestEnabled and isAttackingOrMouseDown() and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
