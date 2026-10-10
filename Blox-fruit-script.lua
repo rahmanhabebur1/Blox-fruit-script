@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1 - Fishing Chamber Added)
+-- MD GAMER SCRIPT (Part 1 - Fishing Legit & Chest Priority Fixed)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -27,7 +27,7 @@ local ignoreMobsEnabled = false
 local ignorePlayersEnabled = false
 local killAuraEnabled = false
 
--- Fishing Options
+-- Fishing Options (Legit & Chest Priority)
 local autoFishEnabled = false
 local autoSellFishEnabled = false
 local selectedBaitType = "Basic Bait"
@@ -257,7 +257,7 @@ local UIListLayoutFarm = Instance.new("UIListLayout")
 UIListLayoutFarm.Parent = FarmContainer
 UIListLayoutFarm.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutFarm.Padding = UDim.new(0, 6)
--- MD GAMER SCRIPT (Part 2 - Fishing Chamber Logic)
+-- MD GAMER SCRIPT (Part 2 - Legit Fishing & Chest Priority)
 local IslandContainer = Instance.new("ScrollingFrame")
 IslandContainer.Size = UDim2.new(1, -120, 1, -45)
 IslandContainer.Position = UDim2.new(0, 115, 0, 40)
@@ -446,15 +446,15 @@ createToggleRow(FarmContainer, "Fast Attack (Hit)", false, function(enabled)
     if enabled then sendNotification("⚡ Fast Attack", "Enabled!") end
 end)
 
--- 🎣 FISHING CHAMBER OPTIONS
+-- 🎣 FISHING CHAMBER OPTIONS (Original UI Names Kept)
 createToggleRow(FishingContainer, "Auto Fish (100% Perfect)", false, function(enabled)
     autoFishEnabled = enabled
-    if enabled then sendNotification("🎣 Fishing", "Auto Fish Activated!") end
+    if enabled then sendNotification("🎣 Fishing", "Auto Fish (Legit Mode) Started!") end
 end)
 
 createToggleRow(FishingContainer, "Auto Sell Fish", false, function(enabled)
     autoSellFishEnabled = enabled
-    if enabled then sendNotification("💰 Fishing", "Auto Sell Fish Enabled!") end
+    if enabled then sendNotification("💰 Fishing", "Auto Sell Fish Active!") end
 end)
 
 local baitFrame = Instance.new("Frame")
@@ -523,25 +523,59 @@ craftCorner.Parent = craftBtn
 
 craftBtn.MouseButton1Click:Connect(function()
     pcall(function()
-        ReplicatedStorage.Remotes.CommF_:InvokeServer("CraftBait", selectedBaitType, 10)
+        local commF = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommF_")
+        if commF then
+            commF:InvokeServer("CraftBait", selectedBaitType, 10)
+        end
     end)
     sendNotification("🔨 Crafting", "Crafting 10x " .. selectedBaitType)
 end)
 
--- Auto Fishing Execution Loop
+-- Helper: Auto Equip Rod for Legit Animation
+local function equipFishingRod()
+    local char = LocalPlayer.Character
+    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+    if not char or not backpack then return nil end
+
+    for _, tool in ipairs(char:GetChildren()) do
+        if tool:IsA("Tool") and string.find(tool.Name, "Rod") then
+            return tool
+        end
+    end
+
+    for _, tool in ipairs(backpack:GetChildren()) do
+        if tool:IsA("Tool") and string.find(tool.Name, "Rod") then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then hum:EquipTool(tool) end
+            return tool
+        end
+    end
+    return nil
+end
+
+-- LEGIT AUTO FISHING ENGINE (With Chest Priority & Natural Animation)
 task.spawn(function()
-    while task.wait(0.5) do
+    while task.wait(1) do
         if autoFishEnabled then
             pcall(function()
-                local char = LocalPlayer.Character
-                if char then
-                    local rod = char:FindFirstChildOfClass("Tool")
-                    if rod and string.find(rod.Name, "Rod") then
-                        rod:Activate()
-                        -- Auto Bypass Fishing Mini-Game Complete
-                        task.wait(1)
-                        ReplicatedStorage.Remotes.CommF_:InvokeServer("FishBite", true)
-                        ReplicatedStorage.Remotes.CommF_:InvokeServer("CompleteFishing", true)
+                local rod = equipFishingRod()
+                if rod then
+                    -- Trigger Natural Rod Throw Animation
+                    rod:Activate()
+                    task.wait(1.5)
+                    
+                    local commF = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommF_")
+                    if commF then
+                        -- Send bite request
+                        commF:InvokeServer("FishBite")
+                        task.wait(0.6)
+                        
+                        -- Chest & Fish Priority Auto Complete (Chest First, then Fish)
+                        pcall(function()
+                            commF:InvokeServer("CompleteFishingMiniGame", "Chest")
+                        end)
+                        task.wait(0.3)
+                        commF:InvokeServer("CompleteFishing", true)
                     end
                 end
             end)
@@ -549,12 +583,15 @@ task.spawn(function()
     end
 end)
 
--- Auto Sell Fish Execution Loop
+-- Auto Sell Fish Loop
 task.spawn(function()
-    while task.wait(3) do
+    while task.wait(4) do
         if autoSellFishEnabled then
             pcall(function()
-                ReplicatedStorage.Remotes.CommF_:InvokeServer("SellAllFish")
+                local commF = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommF_")
+                if commF then
+                    commF:InvokeServer("SellAllFish")
+                end
             end)
         end
     end
@@ -735,7 +772,7 @@ RunService.RenderStepped:Connect(function()
         end)
     end
 end)
--- MD GAMER SCRIPT (Part 3 - Complete Execution)
+-- MD GAMER SCRIPT (Part 3 - Execution Engine)
 task.spawn(function()
     while task.wait(0.2) do
         if fastAttackEnabled then
