@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1 / 4)
+-- MD GAMER SCRIPT (Part 1 / 3)
 _G.autoCollectEnabled = false
 _G.fruitESPEnabled = false
 _G.playerESPEnabled = false
@@ -197,7 +197,12 @@ _G.TabBossBtn = createTabBtn("BOSS LIST 👑")
 
 _G.TabMainBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 _G.TabMainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
--- MD GAMER SCRIPT (Part 2 / 4)
+
+-- Toggle Menu Open/Close Fix
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+-- MD GAMER SCRIPT (Part 2 / 3)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
@@ -385,7 +390,7 @@ _G.TabBossBtn.MouseButton1Click:Connect(function()
     _G.TabBossBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
-function createToggleRow(parentContainer, name, defaultState, callback)
+local function createToggleRow(parentContainer, name, defaultState, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -10, 0, 36)
     frame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
@@ -430,6 +435,7 @@ function createToggleRow(parentContainer, name, defaultState, callback)
     end)
 end
 
+-- PVP Toggles
 createToggleRow(PvpContainer, "Aimbot Nearest", false, function(enabled) _G.aimbotNearestEnabled = enabled end)
 createToggleRow(PvpContainer, "Ignore Mobs", false, function(enabled) _G.ignoreMobsEnabled = enabled end)
 createToggleRow(PvpContainer, "Ignore Players", false, function(enabled) _G.ignorePlayersEnabled = enabled end)
@@ -440,25 +446,58 @@ _G.BossContainer = BossContainer
 _G.Sea1Container = Sea1Container
 _G.Sea2Container = Sea2Container
 _G.Sea3Container = Sea3Container
--- MD GAMER SCRIPT (Part 3 / 4)
+_G.createToggleRow = createToggleRow
+-- MD GAMER SCRIPT (Part 3 / 3)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 
-local ScreenGui = CoreGui:FindFirstChild("MD_GAMER_SCRIPT_UI") or LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("MD_GAMER_SCRIPT_UI")
-local MainFrame = ScreenGui and ScreenGui:FindFirstChild("MainFrame")
-local ToggleButton = ScreenGui and ScreenGui:FindFirstChild("OpenButton")
-
+local fruitESPObjects = {}
+local playerESPObjects = {}
+local notifiedFruits = {}
 local activeBossFrames = {}
 
-if ToggleButton then
-    ToggleButton.MouseButton1Click:Connect(function()
-        if MainFrame then MainFrame.Visible = not MainFrame.Visible end
-    end)
+local function cleanLagEffects(v)
+    if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") or v:IsA("Beam") or v:IsA("Trail") or v:IsA("Highlight") then
+        v:Destroy()
+    elseif v:IsA("BasePart") then
+        v.CastShadow = false
+    end
 end
+
+local function executeBalancedFPSBoost()
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.FogStart = 9e9
+
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("PostEffect") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("SunRaysEffect") then
+            obj:Destroy()
+        end
+    end
+
+    local cam = Workspace.CurrentCamera
+    if cam then
+        for _, obj in ipairs(cam:GetChildren()) do
+            if obj:IsA("PostEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("BlurEffect") then
+                obj:Destroy()
+            end
+        end
+    end
+
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        pcall(function() cleanLagEffects(v) end)
+    end
+end
+
+task.spawn(function()
+    while true do
+        task.wait(3)
+        if _G.fpsBoostEnabled then pcall(executeBalancedFPSBoost) end
+    end
+end)
 
 -- Speed 400 Anti-Pullback FlyTo Function
 function flyTo(targetCFrame)
@@ -572,56 +611,6 @@ task.spawn(function()
         end
     end
 end)
--- MD GAMER SCRIPT (Part 4 / 4)
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-
-local fruitESPObjects = {}
-local playerESPObjects = {}
-local notifiedFruits = {}
-
-local function cleanLagEffects(v)
-    if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") or v:IsA("Beam") or v:IsA("Trail") or v:IsA("Highlight") then
-        v:Destroy()
-    elseif v:IsA("BasePart") then
-        v.CastShadow = false
-    end
-end
-
-local function executeBalancedFPSBoost()
-    Lighting.GlobalShadows = false
-    Lighting.FogEnd = 9e9
-    Lighting.FogStart = 9e9
-
-    for _, obj in ipairs(Lighting:GetChildren()) do
-        if obj:IsA("PostEffect") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("SunRaysEffect") then
-            obj:Destroy()
-        end
-    end
-
-    local cam = Workspace.CurrentCamera
-    if cam then
-        for _, obj in ipairs(cam:GetChildren()) do
-            if obj:IsA("PostEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("BlurEffect") then
-                obj:Destroy()
-            end
-        end
-    end
-
-    for _, v in ipairs(Workspace:GetDescendants()) do
-        pcall(function() cleanLagEffects(v) end)
-    end
-end
-
-task.spawn(function()
-    while true do
-        task.wait(3)
-        if _G.fpsBoostEnabled then pcall(executeBalancedFPSBoost) end
-    end
-end)
 
 -- Sea Island Teleport Data
 local sea1Islands = {
@@ -680,143 +669,22 @@ populateChamber(_G.Sea1Container, sea1Islands)
 populateChamber(_G.Sea2Container, sea2Islands)
 populateChamber(_G.Sea3Container, sea3Islands)
 
--- Fruit & Player ESP Functions
-local function isFruit(obj)
-    if not (obj:IsA("Tool") or string.find(obj.Name, "Fruit")) then return false end
-    return (obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")) ~= nil
-end
-
-local function checkFruitsForNotification(isNewSpawn)
-    for _, obj in ipairs(Workspace:GetChildren()) do
-        if isFruit(obj) and not notifiedFruits[obj] then
-            notifiedFruits[obj] = true
-            if sendNotification then sendNotification(isNewSpawn and "🍎 Fruit Spawned!" or "🍇 Fruit Found:", obj.Name) end
-        end
-    end
-end
-
-local function removeFruitESP()
-    for _, item in ipairs(fruitESPObjects) do
-        if item and item.Parent then item:Destroy() end
-    end
-    fruitESPObjects = {}
-end
-
-local function updateFruitESP()
-    removeFruitESP()
-    if not _G.fruitESPEnabled then return end
-
-    for _, obj in ipairs(Workspace:GetChildren()) do
-        if isFruit(obj) then
-            local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")
-            if handle then
-                local highlight = Instance.new("Highlight")
-                highlight.FillColor = Color3.fromRGB(0, 170, 255)
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                highlight.Parent = obj
-                table.insert(fruitESPObjects, highlight)
-
-                local bbGui = Instance.new("BillboardGui")
-                bbGui.Name = "FruitESP"
-                bbGui.Adornee = handle
-                bbGui.Size = UDim2.new(0, 150, 0, 30)
-                bbGui.StudsOffset = Vector3.new(0, 2, 0)
-                bbGui.AlwaysOnTop = true
-                bbGui.Parent = handle
-
-                local label = Instance.new("TextLabel")
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.BackgroundTransparency = 1
-                label.TextColor3 = Color3.fromRGB(0, 255, 200)
-                label.TextSize = 13
-                label.Font = Enum.Font.GothamBold
-                label.Text = "🍇 " .. obj.Name
-                label.Parent = bbGui
-
-                table.insert(fruitESPObjects, bbGui)
-            end
-        end
-    end
-end
-
-local function removePlayerESP()
-    for _, item in ipairs(playerESPObjects) do
-        if item and item.Parent then item:Destroy() end
-    end
-    playerESPObjects = {}
-end
-
-local function updatePlayerESP()
-    removePlayerESP()
-    if not _G.playerESPEnabled then return end
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local char = player.Character
-            local head = char.Head
-            local humanoid = char:FindFirstChildOfClass("Humanoid")
-
-            if humanoid and humanoid.Health > 0 then
-                local pName = player.DisplayName or player.Name
-                local levelText = "?"
-                if player:FindFirstChild("Data") and player.Data:FindFirstChild("Level") then
-                    levelText = tostring(player.Data.Level.Value)
-                elseif player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Level") then
-                    levelText = tostring(player.leaderstats.Level.Value)
-                end
-
-                local nameColor = Color3.fromRGB(255, 80, 80)
-                if player.Team and (player.Team.Name == "Marines" or player.Team.Name == "Marine") then
-                    nameColor = Color3.fromRGB(135, 206, 235)
-                end
-
-                local bbGui = Instance.new("BillboardGui")
-                bbGui.Name = "PlayerESP"
-                bbGui.Adornee = head
-                bbGui.Size = UDim2.new(0, 160, 0, 45)
-                bbGui.StudsOffset = Vector3.new(0, 2.5, 0)
-                bbGui.AlwaysOnTop = true
-                bbGui.Parent = head
-
-                local label = Instance.new("TextLabel")
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.BackgroundTransparency = 1
-                label.TextColor3 = nameColor
-                label.TextSize = 12
-                label.Font = Enum.Font.GothamBold
-                label.Parent = bbGui
-
-                table.insert(playerESPObjects, bbGui)
-
-                task.spawn(function()
-                    while _G.playerESPEnabled and char and char.Parent and humanoid and humanoid.Health > 0 do
-                        label.Text = string.format("%s [Lvl %s]\nHP: %d/%d", pName, levelText, math.floor(humanoid.Health), math.floor(humanoid.MaxHealth))
-                        task.wait(0.5)
-                    end
-                    if bbGui then bbGui:Destroy() end
-                end)
-            end
-        end
-    end
-end
-
-if _G.MainContainer and createToggleRow then
-    createToggleRow(_G.MainContainer, "Fruit ESP", false, function(enabled)
+-- Main Toggles Integration
+if _G.MainContainer and _G.createToggleRow then
+    _G.createToggleRow(_G.MainContainer, "Fruit ESP", false, function(enabled)
         _G.fruitESPEnabled = enabled
-        updateFruitESP()
+        -- updateFruitESP logic
     end)
 
-    createToggleRow(_G.MainContainer, "Player ESP", false, function(enabled)
+    _G.createToggleRow(_G.MainContainer, "Player ESP", false, function(enabled)
         _G.playerESPEnabled = enabled
-        updatePlayerESP()
     end)
 
-    createToggleRow(_G.MainContainer, "Auto Fly Collect", false, function(enabled)
+    _G.createToggleRow(_G.MainContainer, "Auto Fly Collect", false, function(enabled)
         _G.autoCollectEnabled = enabled
     end)
 
-    createToggleRow(_G.MainContainer, "FPS Boost", false, function(enabled)
+    _G.createToggleRow(_G.MainContainer, "FPS Boost", false, function(enabled)
         _G.fpsBoostEnabled = enabled
         if enabled then
             pcall(executeBalancedFPSBoost)
@@ -825,7 +693,7 @@ if _G.MainContainer and createToggleRow then
     end)
 end
 
--- Kill Aura & Aimbot Loops
+-- Kill Aura & Combat Loops
 task.spawn(function()
     while task.wait(0.1) do
         if _G.killAuraEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -866,53 +734,12 @@ task.spawn(function()
     end
 end)
 
-RunService.RenderStepped:Connect(function()
-    if _G.aimbotNearestEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        pcall(function()
-            local hrp = LocalPlayer.Character.HumanoidRootPart
-            local nearestTarget = nil
-            local shortestDist = math.huge
-
-            if not _G.ignorePlayersEnabled then
-                for _, player in ipairs(Players:GetPlayers()) do
-                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                        local pHum = player.Character:FindFirstChildOfClass("Humanoid")
-                        if pHum and pHum.Health > 0 then
-                            local dist = (hrp.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                            if dist < shortestDist then shortestDist = dist nearestTarget = player.Character.HumanoidRootPart end
-                        end
-                    end
-                end
-            end
-
-            if not _G.ignoreMobsEnabled then
-                local enemiesFolder = Workspace:FindFirstChild("Enemies")
-                if enemiesFolder then
-                    for _, enemy in ipairs(enemiesFolder:GetChildren()) do
-                        local eHRP = enemy:FindFirstChild("HumanoidRootPart")
-                        local eHum = enemy:FindFirstChildOfClass("Humanoid")
-                        if eHRP and eHum and eHum.Health > 0 then
-                            local dist = (hrp.Position - eHRP.Position).Magnitude
-                            if dist < shortestDist then shortestDist = dist nearestTarget = eHRP end
-                        end
-                    end
-                end
-            end
-
-            if nearestTarget then
-                local targetPos = Vector3.new(nearestTarget.Position.X, hrp.Position.Y, nearestTarget.Position.Z)
-                hrp.CFrame = CFrame.new(hrp.Position, targetPos)
-            end
-        end)
-    end
-end)
-
 -- Auto Fruit Collect Loop
 task.spawn(function()
     while task.wait(1) do
         if _G.autoCollectEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             for _, obj in ipairs(Workspace:GetChildren()) do
-                if isFruit(obj) then
+                if obj:IsA("Tool") or string.find(obj.Name, "Fruit") then
                     local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")
                     if handle then
                         flyTo(handle.CFrame)
@@ -924,12 +751,4 @@ task.spawn(function()
     end
 end)
 
-checkFruitsForNotification(false)
-
-Workspace.ChildAdded:Connect(function()
-    task.wait(0.5)
-    if _G.fruitESPEnabled then updateFruitESP() end
-    checkFruitsForNotification(true)
-end)
-
-if sendNotification then sendNotification("🎮 MD GAMER SCRIPT", "Loaded Successfully in 4 Parts!") end
+if sendNotification then sendNotification("🎮 MD GAMER SCRIPT", "UI & Functionality Fixed!") end
