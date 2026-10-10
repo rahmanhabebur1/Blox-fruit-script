@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1)
+-- MD GAMER SCRIPT (Part 1 - Kill Aura Updated)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -9,7 +9,6 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 
 local autoCollectEnabled = false
 local fruitESPEnabled = false
@@ -22,11 +21,11 @@ local fastAttackEnabled = false
 local bringMobEnabled = false
 local selectWeaponType = "Melee"
 
--- PVP Aimbot States
+-- PVP Options
 local aimbotNearestEnabled = false
 local ignoreMobsEnabled = false
 local ignorePlayersEnabled = false
-local lastAttackTime = 0
+local killAuraEnabled = false
 
 local fruitESPObjects = {}
 local playerESPObjects = {}
@@ -134,7 +133,7 @@ BtnIcon.Parent = ToggleButton
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 440, 0, 280)
-MainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
+MainFrame.Position = UDim2.new(0, 3, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 24)
 MainFrame.Visible = false
 MainFrame.Active = true
@@ -231,7 +230,7 @@ PvpContainer.Size = UDim2.new(1, -120, 1, -45)
 PvpContainer.Position = UDim2.new(0, 115, 0, 40)
 PvpContainer.BackgroundTransparency = 1
 PvpContainer.Visible = false
-PvpContainer.CanvasSize = UDim2.new(0, 0, 0, 200)
+PvpContainer.CanvasSize = UDim2.new(0, 0, 0, 220)
 PvpContainer.ScrollBarThickness = 3
 PvpContainer.Parent = MainFrame
 
@@ -253,7 +252,7 @@ local UIListLayoutFarm = Instance.new("UIListLayout")
 UIListLayoutFarm.Parent = FarmContainer
 UIListLayoutFarm.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutFarm.Padding = UDim.new(0, 6)
--- MD GAMER SCRIPT (Part 2)
+-- MD GAMER SCRIPT (Part 2 - Kill Aura & M1 Engine)
 local IslandContainer = Instance.new("ScrollingFrame")
 IslandContainer.Size = UDim2.new(1, -120, 1, -45)
 IslandContainer.Position = UDim2.new(0, 115, 0, 40)
@@ -404,7 +403,7 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
     end)
 end
 
--- PVP Tab Options
+-- PVP Tab Toggles
 createToggleRow(PvpContainer, "Aimbot Nearest", false, function(enabled)
     aimbotNearestEnabled = enabled
     if enabled then sendNotification("🎯 Aimbot", "Activated!") end
@@ -416,6 +415,11 @@ end)
 
 createToggleRow(PvpContainer, "Ignore Players", false, function(enabled)
     ignorePlayersEnabled = enabled
+end)
+
+createToggleRow(PvpContainer, "Kill Aura (No Anim)", false, function(enabled)
+    killAuraEnabled = enabled
+    if enabled then sendNotification("⚡ Kill Aura", "Active (50m Range)") end
 end)
 
 createToggleRow(FarmContainer, "Auto Level Farm", false, function(enabled)
@@ -519,71 +523,56 @@ task.spawn(function()
     end
 end)
 
--- Track Input Time for Lock Hold
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch or input.KeyCode == Enum.KeyCode.Z or input.KeyCode == Enum.KeyCode.X or input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.V or input.KeyCode == Enum.KeyCode.F then
-            lastAttackTime = tick()
-        end
-    end
-end)
+-- Kill Aura Loop (M1 Attack Only, No Animation, 50m Range)
+task.spawn(function()
+    while task.wait(0.1) do
+        if killAuraEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            pcall(function()
+                local char = LocalPlayer.Character
+                local hrp = char.HumanoidRootPart
+                local equippedTool = char:FindFirstChildOfClass("Tool")
 
-local function isAttackingOrMouseDown()
-    return UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or fastAttackEnabled or (tick() - lastAttackTime <= 1.25)
-end
+                -- Only proceed if a weapon is actually equipped
+                if equippedTool then
+                    local function checkAndAttack(targetHRP)
+                        local dist = (hrp.Position - targetHRP.Position).Magnitude
+                        if dist <= 50 then
+                            equippedTool:Activate()
+                        end
+                    end
 
--- Hook Mouse Hit/Target so skill attacks lock directly onto enemy position
-local originalNamecall
-originalNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-    local method = getnamecallmethod()
-    if aimbotNearestEnabled and isAttackingOrMouseDown() and (method == "FindPartOnWithIgnoreList" or method == "Raycast") then
-        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            local nearestTarget = nil
-            local shortestDist = math.huge
+                    if not ignorePlayersEnabled then
+                        for _, player in ipairs(Players:GetPlayers()) do
+                            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                                local pHum = player.Character:FindFirstChildOfClass("Humanoid")
+                                if pHum and pHum.Health > 0 then
+                                    checkAndAttack(player.Character.HumanoidRootPart)
+                                end
+                            end
+                        end
+                    end
 
-            if not ignorePlayersEnabled then
-                for _, player in ipairs(Players:GetPlayers()) do
-                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                        local pHum = player.Character:FindFirstChildOfClass("Humanoid")
-                        if pHum and pHum.Health > 0 then
-                            local dist = (hrp.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                            if dist < shortestDist then
-                                shortestDist = dist
-                                nearestTarget = player.Character.HumanoidRootPart
+                    if not ignoreMobsEnabled then
+                        local enemiesFolder = Workspace:FindFirstChild("Enemies")
+                        if enemiesFolder then
+                            for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+                                local eHRP = enemy:FindFirstChild("HumanoidRootPart")
+                                local eHum = enemy:FindFirstChildOfClass("Humanoid")
+                                if eHRP and eHum and eHum.Health > 0 then
+                                    checkAndAttack(eHRP)
+                                end
                             end
                         end
                     end
                 end
-            end
-
-            if not ignoreMobsEnabled then
-                local enemiesFolder = Workspace:FindFirstChild("Enemies")
-                if enemiesFolder then
-                    for _, enemy in ipairs(enemiesFolder:GetChildren()) do
-                        local eHRP = enemy:FindFirstChild("HumanoidRootPart")
-                        local eHum = enemy:FindFirstChildOfClass("Humanoid")
-                        if eHRP and eHum and eHum.Health > 0 then
-                            local dist = (hrp.Position - eHRP.Position).Magnitude
-                            if dist < shortestDist then
-                                shortestDist = dist
-                                nearestTarget = eHRP
-                            end
-                        end
-                    end
-                end
-            end
-
-            if nearestTarget then
-                Mouse.Hit = nearestTarget.CFrame
-            end
+            end)
         end
     end
-    return originalNamecall(self, ...)
 end)
 
+-- Original Simple Aimbot Engine
 RunService.RenderStepped:Connect(function()
-    if aimbotNearestEnabled and isAttackingOrMouseDown() and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    if aimbotNearestEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         pcall(function()
             local hrp = LocalPlayer.Character.HumanoidRootPart
             local nearestTarget = nil
@@ -628,7 +617,7 @@ RunService.RenderStepped:Connect(function()
         end)
     end
 end)
--- MD GAMER SCRIPT (Part 3)
+-- MD GAMER SCRIPT (Part 3 - Complete Execution)
 task.spawn(function()
     while task.wait(0.2) do
         if fastAttackEnabled then
