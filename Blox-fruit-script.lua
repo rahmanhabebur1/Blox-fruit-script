@@ -1,4 +1,4 @@
--- MD GAMER SCRIPT (Part 1 - Live FPS Counter Toggle Button)
+-- MD GAMER SCRIPT (Part 1 - Fixed Toggle & FPS)
 _G.autoFarmEnabled = false
 _G.autoCollectEnabled = false
 _G.fruitESPEnabled = false
@@ -94,7 +94,26 @@ function sendNotification(title, text)
     end)
 end
 
--- Live FPS Toggle Button (Replaces emoji icon)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 440, 0, 280)
+MainFrame.Position = UDim2.new(0, 3, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 24)
+MainFrame.Visible = false
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local UICornerMain = Instance.new("UICorner")
+UICornerMain.CornerRadius = UDim.new(0, 10)
+UICornerMain.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(0, 170, 255)
+MainStroke.Thickness = 1.5
+MainStroke.Parent = MainFrame
+
+-- Live FPS Toggle Button
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Name = "OpenButton"
 ToggleButton.Size = UDim2.new(0, 75, 0, 36)
@@ -117,7 +136,12 @@ BtnStroke.Color = Color3.fromRGB(0, 170, 255)
 BtnStroke.Thickness = 1.5
 BtnStroke.Parent = ToggleButton
 
--- Real-time FPS Calculator using RenderStepped
+-- Toggle Main UI visibility on click
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- Real-time FPS Calculator
 local frameCount = 0
 local lastTick = tick()
 RunService.RenderStepped:Connect(function()
@@ -130,25 +154,6 @@ RunService.RenderStepped:Connect(function()
         lastTick = currentTick
     end
 end)
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 440, 0, 280)
-MainFrame.Position = UDim2.new(0, 3, 0.3, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 24)
-MainFrame.Visible = false
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
-
-local UICornerMain = Instance.new("UICorner")
-UICornerMain.CornerRadius = UDim.new(0, 10)
-UICornerMain.Parent = MainFrame
-
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(0, 170, 255)
-MainStroke.Thickness = 1.5
-MainStroke.Parent = MainFrame
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Size = UDim2.new(1, 0, 0, 35)
@@ -379,10 +384,6 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 
-local ScreenGui = CoreGui:FindFirstChild("MD_GAMER_SCRIPT_UI") or LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("MD_GAMER_SCRIPT_UI")
-local MainFrame = ScreenGui and ScreenGui:FindFirstChild("MainFrame")
-local ToggleButton = ScreenGui and ScreenGui:FindFirstChild("OpenButton")
-
 local fruitESPObjects = {}
 local playerESPObjects = {}
 local notifiedFruits = {}
@@ -426,13 +427,6 @@ task.spawn(function()
         if _G.fpsBoostEnabled then pcall(executeBalancedFPSBoost) end
     end
 end)
-
--- Click FPS Button to Toggle Main UI
-if ToggleButton then
-    ToggleButton.MouseButton1Click:Connect(function()
-        if MainFrame then MainFrame.Visible = not MainFrame.Visible end
-    end)
-end
 
 local function flyTo(targetCFrame)
     local char = LocalPlayer.Character
@@ -701,4 +695,4 @@ Workspace.ChildAdded:Connect(function()
     checkFruitsForNotification(true)
 end)
 
-if sendNotification then sendNotification("🎮 MD GAMER SCRIPT", "Live FPS Counter & UI Ready!") end
+if sendNotification then sendNotification("🎮 MD GAMER SCRIPT", "UI & Toggle Fully Fixed!") end
