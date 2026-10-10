@@ -1,14 +1,14 @@
--- MD GAMER SCRIPT (Part 1 - Fixed Toggle & FPS)
+-- MD GAMER SCRIPT (Part 1 of 3)
 _G.autoFarmEnabled = false
 _G.autoCollectEnabled = false
-_G.fruitESPEnabled = false
-_G.playerESPEnabled = false
+_G.fruitESPEnabled = true
+_G.playerESPEnabled = true
 _G.fpsBoostEnabled = false
 
 _G.aimbotNearestEnabled = false
 _G.ignoreMobsEnabled = false
 _G.ignorePlayersEnabled = false
-_G.killAuraEnabled = false
+_G.killAuraEnabled = true
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -17,7 +17,6 @@ local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -113,7 +112,6 @@ MainStroke.Color = Color3.fromRGB(0, 170, 255)
 MainStroke.Thickness = 1.5
 MainStroke.Parent = MainFrame
 
--- Live FPS Toggle Button
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Name = "OpenButton"
 ToggleButton.Size = UDim2.new(0, 75, 0, 36)
@@ -136,12 +134,10 @@ BtnStroke.Color = Color3.fromRGB(0, 170, 255)
 BtnStroke.Thickness = 1.5
 BtnStroke.Parent = ToggleButton
 
--- Toggle Main UI visibility on click
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- Real-time FPS Calculator
 local frameCount = 0
 local lastTick = tick()
 RunService.RenderStepped:Connect(function()
@@ -215,10 +211,9 @@ _G.TabIslandBtn = createTabBtn("ISLAND 🏝️")
 
 _G.TabMainBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 _G.TabMainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
--- MD GAMER SCRIPT (Part 2)
+-- MD GAMER SCRIPT (Part 2 of 3)
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
 local ScreenGui = CoreGui:FindFirstChild("MD_GAMER_SCRIPT_UI") or LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("MD_GAMER_SCRIPT_UI")
@@ -367,21 +362,16 @@ function createToggleRow(parentContainer, name, defaultState, callback)
     end)
 end
 
-createToggleRow(PvpContainer, "Aimbot Nearest", false, function(enabled) _G.aimbotNearestEnabled = enabled end)
-createToggleRow(PvpContainer, "Ignore Mobs", false, function(enabled) _G.ignoreMobsEnabled = enabled end)
-createToggleRow(PvpContainer, "Ignore Players", false, function(enabled) _G.ignorePlayersEnabled = enabled end)
-createToggleRow(PvpContainer, "Kill Aura (No Anim)", false, function(enabled) _G.killAuraEnabled = enabled end)
-
-createToggleRow(FarmContainer, "Auto Farm Level", false, function(enabled) _G.autoFarmEnabled = enabled end)
-
 _G.MainContainer = MainContainer
+_G.PvpContainer = PvpContainer
+_G.FarmContainer = FarmContainer
 _G.IslandContainer = IslandContainer
--- MD GAMER SCRIPT (Part 3)
+_G.createToggleRow = createToggleRow
+-- MD GAMER SCRIPT (Part 3 of 3)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 
 local fruitESPObjects = {}
@@ -400,22 +390,17 @@ local function executeBalancedFPSBoost()
     Lighting.GlobalShadows = false
     Lighting.FogEnd = 9e9
     Lighting.FogStart = 9e9
-
     for _, obj in ipairs(Lighting:GetChildren()) do
         if obj:IsA("PostEffect") or obj:IsA("Atmosphere") or obj:IsA("Clouds") or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("SunRaysEffect") then
             obj:Destroy()
         end
     end
-
     local cam = Workspace.CurrentCamera
     if cam then
         for _, obj in ipairs(cam:GetChildren()) do
-            if obj:IsA("PostEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("BlurEffect") then
-                obj:Destroy()
-            end
+            if obj:IsA("PostEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("BlurEffect") then obj:Destroy() end
         end
     end
-
     for _, v in ipairs(Workspace:GetDescendants()) do
         pcall(function() cleanLagEffects(v) end)
     end
@@ -431,12 +416,10 @@ end)
 local function flyTo(targetCFrame)
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-
     local hrp = char.HumanoidRootPart
     local distance = (hrp.Position - targetCFrame.Position).Magnitude
     local flySpeed = 250
     local duration = distance / flySpeed
-
     local startTime = tick()
     local startCFrame = hrp.CFrame
     local connection
@@ -444,58 +427,66 @@ local function flyTo(targetCFrame)
     connection = RunService.RenderStepped:Connect(function()
         local elapsed = tick() - startTime
         local alpha = math.clamp(elapsed / duration, 0, 1)
-        
         if hrp and hrp.Parent then
             hrp.Velocity = Vector3.zero
             hrp.CFrame = startCFrame:Lerp(targetCFrame, alpha)
         end
-
         if alpha >= 1 or not hrp or not hrp.Parent then
             connection:Disconnect()
         end
     end)
-
     task.wait(duration)
     if connection then connection:Disconnect() end
 end
 
+-- Populate Toggles Safely
+if _G.MainContainer and _G.createToggleRow then
+    _G.createToggleRow(_G.MainContainer, "Fruit ESP", false, function(enabled) _G.fruitESPEnabled = enabled end)
+    _G.createToggleRow(_G.MainContainer, "Player ESP", false, function(enabled) _G.playerESPEnabled = enabled end)
+    _G.createToggleRow(_G.MainContainer, "Auto Fly Collect", false, function(enabled) _G.autoCollectEnabled = enabled end)
+    _G.createToggleRow(_G.MainContainer, "FPS Boost", false, function(enabled)
+        _G.fpsBoostEnabled = enabled
+        if enabled then
+            pcall(executeBalancedFPSBoost)
+            if sendNotification then sendNotification("🚀 FPS Boost", "Balanced Mode Active!") end
+        end
+    end)
+end
+
+if _G.PvpContainer and _G.createToggleRow then
+    _G.createToggleRow(_G.PvpContainer, "Aimbot Nearest", false, function(enabled) _G.aimbotNearestEnabled = enabled end)
+    _G.createToggleRow(_G.PvpContainer, "Ignore Mobs", false, function(enabled) _G.ignoreMobsEnabled = enabled end)
+    _G.createToggleRow(_G.PvpContainer, "Ignore Players", false, function(enabled) _G.ignorePlayersEnabled = enabled end)
+    _G.createToggleRow(_G.PvpContainer, "Kill Aura (No Anim)", false, function(enabled) _G.killAuraEnabled = enabled end)
+end
+
+if _G.FarmContainer and _G.createToggleRow then
+    _G.createToggleRow(_G.FarmContainer, "Auto Farm Level", false, function(enabled) _G.autoFarmEnabled = enabled end)
+end
+
+-- Populate Islands
 local seaIslands = {
     [2753915549] = {
-        ["Starter Island"] = Vector3.new(1090, 16, 1400), 
-        ["Jungle"] = Vector3.new(-1240, 12, 380),
-        ["Pirate Village"] = Vector3.new(-1120, 4, 3850), 
-        ["Desert"] = Vector3.new(1090, 6, 4360),
-        ["Middle Town"] = Vector3.new(-650, 15, 1500), 
-        ["Frozen Village"] = Vector3.new(1150, 7, -1150),
-        ["Marine Ford"] = Vector3.new(-4800, 20, 4200), 
-        ["Skypiea"] = Vector3.new(-4720, 855, -2630),
-        ["Prison"] = Vector3.new(4850, 5, 740), 
-        ["Colosseum"] = Vector3.new(-1450, 7, -2750),
-        ["Magma Village"] = Vector3.new(-5250, 8, 8500), 
-        ["Underwater City"] = Vector3.new(3860, 5, -1920),
+        ["Starter Island"] = Vector3.new(1090, 16, 1400), ["Jungle"] = Vector3.new(-1240, 12, 380),
+        ["Pirate Village"] = Vector3.new(-1120, 4, 3850), ["Desert"] = Vector3.new(1090, 6, 4360),
+        ["Middle Town"] = Vector3.new(-650, 15, 1500), ["Frozen Village"] = Vector3.new(1150, 7, -1150),
+        ["Marine Ford"] = Vector3.new(-4800, 20, 4200), ["Skypiea"] = Vector3.new(-4720, 855, -2630),
+        ["Prison"] = Vector3.new(4850, 5, 740), ["Colosseum"] = Vector3.new(-1450, 7, -2750),
+        ["Magma Village"] = Vector3.new(-5250, 8, 8500), ["Underwater City"] = Vector3.new(3860, 5, -1920),
         ["Fountain City"] = Vector3.new(5120, 4, 4100)
     },
     [4442272183] = {
-        ["Cafe"] = Vector3.new(-380, 73, 300), 
-        ["Kingdom of Rose"] = Vector3.new(-450, 73, 1500),
-        ["Ushapp's Island"] = Vector3.new(4800, 8, 2800), 
-        ["Green Zone"] = Vector3.new(-2400, 73, -3200),
-        ["Graveyard"] = Vector3.new(-5400, 48, -750), 
-        ["Snow Mountain"] = Vector3.new(1300, 400, -1300),
-        ["Hot and Cold"] = Vector3.new(-6100, 15, -5000), 
-        ["Cursed Ship"] = Vector3.new(900, 125, 3300),
-        ["Ice Castle"] = Vector3.new(5500, 28, -6200), 
-        ["Forgotten Island"] = Vector3.new(-3050, 235, -10150)
+        ["Cafe"] = Vector3.new(-380, 73, 300), ["Kingdom of Rose"] = Vector3.new(-450, 73, 1500),
+        ["Ushapp's Island"] = Vector3.new(4800, 8, 2800), ["Green Zone"] = Vector3.new(-2400, 73, -3200),
+        ["Graveyard"] = Vector3.new(-5400, 48, -750), ["Snow Mountain"] = Vector3.new(1300, 400, -1300),
+        ["Hot and Cold"] = Vector3.new(-6100, 15, -5000), ["Cursed Ship"] = Vector3.new(900, 125, 3300),
+        ["Ice Castle"] = Vector3.new(5500, 28, -6200), ["Forgotten Island"] = Vector3.new(-3050, 235, -10150)
     },
     [7449423635] = {
-        ["Port Town"] = Vector3.new(-2900, 15, 5300), 
-        ["Great Tree"] = Vector3.new(2250, 25, -7200),
-        ["Floating Turtle"] = Vector3.new(-13200, 330, -7600), 
-        ["Castle on the Sea"] = Vector3.new(-5000, 315, -3000),
-        ["Haunted Castle"] = Vector3.new(-9500, 140, 5500), 
-        ["Chocolate Land"] = Vector3.new(100, 25, -12100),
-        ["Ice Cream Land"] = Vector3.new(-900, 65, -11000), 
-        ["Tiki Outpost"] = Vector3.new(-16200, 10, 500)
+        ["Port Town"] = Vector3.new(-2900, 15, 5300), ["Great Tree"] = Vector3.new(2250, 25, -7200),
+        ["Floating Turtle"] = Vector3.new(-13200, 330, -7600), ["Castle on the Sea"] = Vector3.new(-5000, 315, -3000),
+        ["Haunted Castle"] = Vector3.new(-9500, 140, 5500), ["Chocolate Land"] = Vector3.new(100, 25, -12100),
+        ["Ice Cream Land"] = Vector3.new(-900, 65, -11000), ["Tiki Outpost"] = Vector3.new(-16200, 10, 500)
     }
 }
 
@@ -527,172 +518,4 @@ if _G.IslandContainer then
     _G.IslandContainer.CanvasSize = UDim2.new(0, 0, 0, totalIslands * 38)
 end
 
-local function isFruit(obj)
-    if not (obj:IsA("Tool") or string.find(obj.Name, "Fruit")) then return false end
-    return (obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")) ~= nil
-end
-
-local function checkFruitsForNotification(isNewSpawn)
-    for _, obj in ipairs(Workspace:GetChildren()) do
-        if isFruit(obj) and not notifiedFruits[obj] then
-            notifiedFruits[obj] = true
-            if sendNotification then sendNotification(isNewSpawn and "🍎 Fruit Spawned!" or "🍇 Fruit Found:", obj.Name) end
-        end
-    end
-end
-
-local function removeFruitESP()
-    for _, item in ipairs(fruitESPObjects) do
-        if item and item.Parent then item:Destroy() end
-    end
-    fruitESPObjects = {}
-end
-
-local function updateFruitESP()
-    removeFruitESP()
-    if not _G.fruitESPEnabled then return end
-
-    for _, obj in ipairs(Workspace:GetChildren()) do
-        if isFruit(obj) then
-            local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")
-            if handle then
-                local highlight = Instance.new("Highlight")
-                highlight.FillColor = Color3.fromRGB(0, 170, 255)
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                highlight.Parent = obj
-                table.insert(fruitESPObjects, highlight)
-
-                local bbGui = Instance.new("BillboardGui")
-                bbGui.Name = "FruitESP"
-                bbGui.Adornee = handle
-                bbGui.Size = UDim2.new(0, 150, 0, 30)
-                bbGui.StudsOffset = Vector3.new(0, 2, 0)
-                bbGui.AlwaysOnTop = true
-                bbGui.Parent = handle
-
-                local label = Instance.new("TextLabel")
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.BackgroundTransparency = 1
-                label.TextColor3 = Color3.fromRGB(0, 255, 200)
-                label.TextSize = 13
-                label.Font = Enum.Font.GothamBold
-                label.Text = "🍇 " .. obj.Name
-                label.Parent = bbGui
-
-                table.insert(fruitESPObjects, bbGui)
-            end
-        end
-    end
-end
-
-local function removePlayerESP()
-    for _, item in ipairs(playerESPObjects) do
-        if item and item.Parent then item:Destroy() end
-    end
-    playerESPObjects = {}
-end
-
-local function updatePlayerESP()
-    removePlayerESP()
-    if not _G.playerESPEnabled then return end
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local char = player.Character
-            local head = char.Head
-            local humanoid = char:FindFirstChildOfClass("Humanoid")
-
-            if humanoid and humanoid.Health > 0 then
-                local pName = player.DisplayName or player.Name
-                local levelText = "?"
-                if player:FindFirstChild("Data") and player.Data:FindFirstChild("Level") then
-                    levelText = tostring(player.Data.Level.Value)
-                elseif player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Level") then
-                    levelText = tostring(player.leaderstats.Level.Value)
-                end
-
-                local nameColor = Color3.fromRGB(255, 80, 80)
-                if player.Team and (player.Team.Name == "Marines" or player.Team.Name == "Marine") then
-                    nameColor = Color3.fromRGB(135, 206, 235)
-                end
-
-                local bbGui = Instance.new("BillboardGui")
-                bbGui.Name = "PlayerESP"
-                bbGui.Adornee = head
-                bbGui.Size = UDim2.new(0, 160, 0, 45)
-                bbGui.StudsOffset = Vector3.new(0, 2.5, 0)
-                bbGui.AlwaysOnTop = true
-                bbGui.Parent = head
-
-                local label = Instance.new("TextLabel")
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.BackgroundTransparency = 1
-                label.TextColor3 = nameColor
-                label.TextSize = 12
-                label.Font = Enum.Font.GothamBold
-                label.Parent = bbGui
-
-                table.insert(playerESPObjects, bbGui)
-
-                task.spawn(function()
-                    while _G.playerESPEnabled and char and char.Parent and humanoid and humanoid.Health > 0 do
-                        label.Text = string.format("%s [Lvl %s]\nHP: %d/%d", pName, levelText, math.floor(humanoid.Health), math.floor(humanoid.MaxHealth))
-                        task.wait(0.5)
-                    end
-                    if bbGui then bbGui:Destroy() end
-                end)
-            end
-        end
-    end
-end
-
-if _G.MainContainer and createToggleRow then
-    createToggleRow(_G.MainContainer, "Fruit ESP", false, function(enabled)
-        _G.fruitESPEnabled = enabled
-        updateFruitESP()
-    end)
-
-    createToggleRow(_G.MainContainer, "Player ESP", false, function(enabled)
-        _G.playerESPEnabled = enabled
-        updatePlayerESP()
-    end)
-
-    createToggleRow(_G.MainContainer, "Auto Fly Collect", false, function(enabled)
-        _G.autoCollectEnabled = enabled
-    end)
-
-    createToggleRow(_G.MainContainer, "FPS Boost", false, function(enabled)
-        _G.fpsBoostEnabled = enabled
-        if enabled then
-            pcall(executeBalancedFPSBoost)
-            if sendNotification then sendNotification("🚀 FPS Boost", "Balanced Mode Active!") end
-        end
-    end)
-end
-
-task.spawn(function()
-    while task.wait(1) do
-        if _G.autoCollectEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            for _, obj in ipairs(Workspace:GetChildren()) do
-                if isFruit(obj) then
-                    local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")
-                    if handle then
-                        flyTo(handle.CFrame)
-                        break
-                    end
-                end
-            end
-        end
-    end
-end)
-
-checkFruitsForNotification(false)
-
-Workspace.ChildAdded:Connect(function()
-    task.wait(0.5)
-    if _G.fruitESPEnabled then updateFruitESP() end
-    checkFruitsForNotification(true)
-end)
-
-if sendNotification then sendNotification("🎮 MD GAMER SCRIPT", "UI & Toggle Fully Fixed!") end
+if sendNotification then sendNotification("🎮 MD GAMER SCRIPT", "Loaded Successfully!") end
