@@ -1,4 +1,6 @@
--- MD GAMER SCRIPT (Part 1 - Kill Aura Updated)
+-- ==========================================
+-- MD GAMER SCRIPT (Part 1 - Services & UI)
+-- ==========================================
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
@@ -8,18 +10,13 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
-local autoCollectEnabled = false
-local fruitESPEnabled = false
-local playerESPEnabled = false
+local autoCollectEnabled = true
+local fruitESPEnabled = true
+local playerESPEnabled = true
 local fpsBoostEnabled = false
-
-local autoFarmEnabled = false
-local autoQuestEnabled = false
-local fastAttackEnabled = false
-local bringMobEnabled = false
-local selectWeaponType = "Melee"
 
 -- PVP Options
 local aimbotNearestEnabled = false
@@ -188,7 +185,7 @@ SidebarPadding.Parent = Sidebar
 
 local function createTabBtn(text)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 100, 0, 30)
+    btn.Size = UDim2.new(0, 100, 0, 32)
     btn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(180, 180, 180)
@@ -204,10 +201,9 @@ end
 
 local TabMainBtn = createTabBtn("Main / ESP")
 local TabPvpBtn = createTabBtn("PVP ☠️")
-local TabFarmBtn = createTabBtn("AUTO FARM ⚔️")
 local TabIslandBtn = createTabBtn("ISLAND 🏝️")
-local TabFruitBtn = createTabBtn("FRUIT LIST 🍑")
 local TabServerBtn = createTabBtn("SERVER 🌐")
+local TabMovementBtn = createTabBtn("MOVEMENT 👨🏻‍💻")
 
 TabMainBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 TabMainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -239,20 +235,6 @@ UIListLayoutPvp.Parent = PvpContainer
 UIListLayoutPvp.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutPvp.Padding = UDim.new(0, 6)
 
-local FarmContainer = Instance.new("ScrollingFrame")
-FarmContainer.Size = UDim2.new(1, -120, 1, -45)
-FarmContainer.Position = UDim2.new(0, 115, 0, 40)
-FarmContainer.BackgroundTransparency = 1
-FarmContainer.Visible = false
-FarmContainer.CanvasSize = UDim2.new(0, 0, 0, 250)
-FarmContainer.ScrollBarThickness = 3
-FarmContainer.Parent = MainFrame
-
-local UIListLayoutFarm = Instance.new("UIListLayout")
-UIListLayoutFarm.Parent = FarmContainer
-UIListLayoutFarm.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayoutFarm.Padding = UDim.new(0, 6)
--- MD GAMER SCRIPT (Part 2 - Kill Aura & M1 Engine)
 local IslandContainer = Instance.new("ScrollingFrame")
 IslandContainer.Size = UDim2.new(1, -120, 1, -45)
 IslandContainer.Position = UDim2.new(0, 115, 0, 40)
@@ -267,26 +249,12 @@ UIListLayoutIsland.Parent = IslandContainer
 UIListLayoutIsland.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutIsland.Padding = UDim.new(0, 6)
 
-local FruitContainer = Instance.new("ScrollingFrame")
-FruitContainer.Size = UDim2.new(1, -120, 1, -45)
-FruitContainer.Position = UDim2.new(0, 115, 0, 40)
-FruitContainer.BackgroundTransparency = 1
-FruitContainer.Visible = false
-FruitContainer.CanvasSize = UDim2.new(0, 0, 0, 400)
-FruitContainer.ScrollBarThickness = 3
-FruitContainer.Parent = MainFrame
-
-local UIListLayoutFruit = Instance.new("UIListLayout")
-UIListLayoutFruit.Parent = FruitContainer
-UIListLayoutFruit.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayoutFruit.Padding = UDim.new(0, 5)
-
 local ServerContainer = Instance.new("ScrollingFrame")
 ServerContainer.Size = UDim2.new(1, -120, 1, -45)
 ServerContainer.Position = UDim2.new(0, 115, 0, 40)
 ServerContainer.BackgroundTransparency = 1
 ServerContainer.Visible = false
-ServerContainer.CanvasSize = UDim2.new(0, 0, 0, 200)
+ServerContainer.CanvasSize = UDim2.new(0, 0, 0, 160)
 ServerContainer.ScrollBarThickness = 3
 ServerContainer.Parent = MainFrame
 
@@ -295,25 +263,36 @@ UIListLayoutServer.Parent = ServerContainer
 UIListLayoutServer.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayoutServer.Padding = UDim.new(0, 6)
 
+local MovementContainer = Instance.new("ScrollingFrame")
+MovementContainer.Size = UDim2.new(1, -120, 1, -45)
+MovementContainer.Position = UDim2.new(0, 115, 0, 40)
+MovementContainer.BackgroundTransparency = 1
+MovementContainer.Visible = false
+MovementContainer.CanvasSize = UDim2.new(0, 0, 0, 160)
+MovementContainer.ScrollBarThickness = 3
+MovementContainer.Parent = MainFrame
+
+local UIListLayoutMovement = Instance.new("UIListLayout")
+UIListLayoutMovement.Parent = MovementContainer
+UIListLayoutMovement.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutMovement.Padding = UDim.new(0, 6)
+
 local function resetTabs()
     MainContainer.Visible = false
     PvpContainer.Visible = false
-    FarmContainer.Visible = false
     IslandContainer.Visible = false
-    FruitContainer.Visible = false
     ServerContainer.Visible = false
+    MovementContainer.Visible = false
     TabMainBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabMainBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabPvpBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabPvpBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
-    TabFarmBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
-    TabFarmBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabIslandBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabIslandBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
-    TabFruitBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
-    TabFruitBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     TabServerBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
     TabServerBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    TabMovementBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    TabMovementBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
 end
 
 TabMainBtn.MouseButton1Click:Connect(function()
@@ -330,13 +309,6 @@ TabPvpBtn.MouseButton1Click:Connect(function()
     TabPvpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
-TabFarmBtn.MouseButton1Click:Connect(function()
-    resetTabs()
-    FarmContainer.Visible = true
-    TabFarmBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    TabFarmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-end)
-
 TabIslandBtn.MouseButton1Click:Connect(function()
     resetTabs()
     IslandContainer.Visible = true
@@ -344,18 +316,18 @@ TabIslandBtn.MouseButton1Click:Connect(function()
     TabIslandBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
-TabFruitBtn.MouseButton1Click:Connect(function()
-    resetTabs()
-    FruitContainer.Visible = true
-    TabFruitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    TabFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-end)
-
 TabServerBtn.MouseButton1Click:Connect(function()
     resetTabs()
     ServerContainer.Visible = true
     TabServerBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     TabServerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
+TabMovementBtn.MouseButton1Click:Connect(function()
+    resetTabs()
+    MovementContainer.Visible = true
+    TabMovementBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    TabMovementBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
 local function createToggleRow(parentContainer, name, defaultState, callback)
@@ -403,10 +375,284 @@ local function createToggleRow(parentContainer, name, defaultState, callback)
     end)
 end
 
--- PVP Tab Toggles
+local function isFruit(obj)
+    if not (obj:IsA("Tool") or string.find(obj.Name, "Fruit")) then return false end
+    return (obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")) ~= nil
+end
+-- ==========================================
+-- FLOATING BUTTONS & HOTKEYS SETUP
+-- ==========================================
+local FloatingHolder = Instance.new("ScreenGui")
+FloatingHolder.Name = "MD_FloatingButtons"
+FloatingHolder.ResetOnSpawn = false
+FloatingHolder.Enabled = false
+
+if gethui then
+    FloatingHolder.Parent = gethui()
+elseif syn and syn.protect_gui then
+    syn.protect_gui(FloatingHolder)
+    FloatingHolder.Parent = CoreGui
+else
+    FloatingHolder.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local speedActive = false
+local floatSpeedBtn, floatCollectBtn
+
+local function instantCollectAction()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if not hrp then return end
+    
+    local found = false
+    local fruitHandle = nil
+    local fruitName = ""
+    
+    for _, obj in pairs(Workspace:GetChildren()) do
+        if isFruit(obj) then
+            local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")
+            if handle then
+                fruitHandle = handle
+                fruitName = obj.Name
+                found = true
+                break
+            end
+        end
+    end
+    
+    if found and fruitHandle then
+        local originalPos = hrp.CFrame
+        hrp.CFrame = fruitHandle.CFrame
+        sendNotification("MOVEMENT", "Teleported to " .. fruitName .. "! Returning in 3s...")
+        
+        task.wait(3.0)
+        
+        if hrp and hrp.Parent then
+            hrp.CFrame = originalPos
+            sendNotification("MOVEMENT", "Fruit collected & returned back!")
+        end
+    else
+        sendNotification("MOVEMENT", "No natural or dropped fruit found!")
+    end
+end
+
+local function toggleSpeedAction()
+    speedActive = not speedActive
+    if speedActive then
+        if floatSpeedBtn then floatSpeedBtn.BackgroundColor3 = Color3.fromRGB(60, 255, 60) end
+        sendNotification("MOVEMENT", "Smooth Speed: ON")
+        task.spawn(function()
+            while speedActive do
+                task.wait(0.01)
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    local hum = char:FindFirstChild("Humanoid")
+                    if hrp and hum and hum.MoveDirection.Magnitude > 0 then
+                        hrp.CFrame = hrp.CFrame + (hum.MoveDirection * 1.8)
+                    end
+                end)
+            end
+        end)
+    else
+        if floatSpeedBtn then floatSpeedBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60) end
+        sendNotification("MOVEMENT", "Smooth Speed: OFF")
+    end
+end
+
+-- Keyboard Hotkeys Control (+ for Collect, - for Speed)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.Equals or input.KeyCode == Enum.KeyCode.KeypadPlus then
+            instantCollectAction()
+        elseif input.KeyCode == Enum.KeyCode.Minus or input.KeyCode == Enum.KeyCode.KeypadMinus then
+            toggleSpeedAction()
+        end
+    end
+end)
+
+-- 1. COLLECT FLOATING BUTTON
+floatCollectBtn = Instance.new("TextButton")
+floatCollectBtn.Name = "FloatCollect"
+floatCollectBtn.Size = UDim2.new(0, 75, 0, 30)
+floatCollectBtn.Position = UDim2.new(0.02, 0, 0.5, 0)
+floatCollectBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+floatCollectBtn.BackgroundTransparency = 0.7
+floatCollectBtn.Text = "collect"
+floatCollectBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatCollectBtn.Font = Enum.Font.GothamBold
+floatCollectBtn.TextSize = 12
+floatCollectBtn.Active = true
+floatCollectBtn.Draggable = true
+floatCollectBtn.Parent = FloatingHolder
+
+local fcCorner = Instance.new("UICorner")
+fcCorner.CornerRadius = UDim.new(0, 6)
+fcCorner.Parent = floatCollectBtn
+
+floatCollectBtn.MouseButton1Click:Connect(instantCollectAction)
+
+-- 2. SPEED FLOATING BUTTON
+floatSpeedBtn = Instance.new("TextButton")
+floatSpeedBtn.Name = "FloatSpeed"
+floatSpeedBtn.Size = UDim2.new(0, 75, 0, 30)
+floatSpeedBtn.Position = UDim2.new(0.02, 0, 0.58, 0)
+floatSpeedBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+floatSpeedBtn.BackgroundTransparency = 0.7
+floatSpeedBtn.Text = "speed"
+floatSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatSpeedBtn.Font = Enum.Font.GothamBold
+floatSpeedBtn.TextSize = 12
+floatSpeedBtn.Active = true
+floatSpeedBtn.Draggable = true
+floatSpeedBtn.Parent = FloatingHolder
+
+local fsCorner = Instance.new("UICorner")
+fsCorner.CornerRadius = UDim.new(0, 6)
+fsCorner.Parent = floatSpeedBtn
+
+floatSpeedBtn.MouseButton1Click:Connect(toggleSpeedAction)
+
+-- ==========================================
+-- MOVEMENT TAB FEATURES
+-- ==========================================
+local tpFruitBtn = Instance.new("TextButton")
+tpFruitBtn.Size = UDim2.new(1, -10, 0, 36)
+tpFruitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+tpFruitBtn.Text = "1. INSTANT FRUIT COLLECT ⚡"
+tpFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpFruitBtn.Font = Enum.Font.GothamBold
+tpFruitBtn.TextSize = 11
+tpFruitBtn.Parent = MovementContainer
+
+local tpFruitCorner = Instance.new("UICorner")
+tpFruitCorner.CornerRadius = UDim.new(0, 6)
+tpFruitCorner.Parent = tpFruitBtn
+
+tpFruitBtn.MouseButton1Click:Connect(instantCollectAction)
+
+createToggleRow(MovementContainer, "2. SMOOTH SPEED 🏃🏻‍♂️", false, function(enabled)
+    if speedActive ~= enabled then
+        toggleSpeedAction()
+    end
+end)
+
+createToggleRow(MovementContainer, "Show Mobile Buttons 📱", false, function(enabled)
+    FloatingHolder.Enabled = enabled
+    sendNotification("MOVEMENT", enabled and "Mobile floating buttons shown!" or "Mobile floating buttons hidden!")
+end)
+-- ==========================================
+-- MD GAMER SCRIPT (Part 2 - Server Hop & PVP Logic)
+-- ==========================================
+local serverHopBtn = Instance.new("TextButton")
+serverHopBtn.Size = UDim2.new(1, -10, 0, 34)
+serverHopBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+serverHopBtn.Text = "🌐 Browser Top-Right Server Hop"
+serverHopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+serverHopBtn.Font = Enum.Font.GothamBold
+serverHopBtn.TextSize = 11
+serverHopBtn.Parent = ServerContainer
+
+local serverHopCorner = Instance.new("UICorner")
+serverHopCorner.CornerRadius = UDim.new(0, 6)
+serverHopCorner.Parent = serverHopBtn
+
+serverHopBtn.MouseButton1Click:Connect(function()
+    sendNotification("🌐 Server Hop", "Scanning top-right server browser...")
+    task.spawn(function()
+        pcall(function()
+            local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+            local serverBrowser = playerGui:FindFirstChild("ServerBrowser", true) or playerGui:FindFirstChild("ServerBrowserUI", true)
+            
+            if not serverBrowser and ReplicatedStorage:FindFirstChild("Remotes") then
+                pcall(function()
+                    ReplicatedStorage.Remotes.CommF_:InvokeServer("ServerBrowser")
+                end)
+                task.wait(0.6)
+                serverBrowser = playerGui:FindFirstChild("ServerBrowser", true) or playerGui:FindFirstChild("ServerBrowserUI", true)
+            end
+
+            if serverBrowser then
+                local refreshBtn = serverBrowser:FindFirstChild("Refresh", true)
+                if refreshBtn then
+                    if firesignal then
+                        firesignal(refreshBtn.MouseButton1Click)
+                    elseif getconnections then
+                        for _, conn in ipairs(getconnections(refreshBtn.MouseButton1Click)) do conn:Fire() end
+                    end
+                    task.wait(0.8)
+                end
+                
+                local bestJoinBtn = nil
+                for _, obj in ipairs(serverBrowser:GetDescendants()) do
+                    if obj:IsA("TextButton") or obj:IsA("ImageButton") then
+                        if obj.Name == "Join" or string.lower(obj.Text):find("join") then
+                            bestJoinBtn = obj
+                            break
+                        end
+                    end
+                end
+                
+                if bestJoinBtn then
+                    sendNotification("🌐 Connecting...", "Joining best browser server...")
+                    if firesignal then
+                        firesignal(bestJoinBtn.MouseButton1Click)
+                    elseif getconnections then
+                        for _, conn in ipairs(getconnections(bestJoinBtn.MouseButton1Click)) do conn:Fire() end
+                    end
+                    return
+                end
+            end
+            
+            sendNotification("⚠️ Notice", "Executing safe fallback hop...")
+            TeleportService:Teleport(game.PlaceId, LocalPlayer)
+        end)
+    end)
+end)
+
+local rejoinBtn = Instance.new("TextButton")
+rejoinBtn.Size = UDim2.new(1, -10, 0, 32)
+rejoinBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+rejoinBtn.Text = "🔄 Rejoin Current Server"
+rejoinBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+rejoinBtn.Font = Enum.Font.GothamSemibold
+rejoinBtn.TextSize = 11
+rejoinBtn.Parent = ServerContainer
+
+local rejoinCorner = Instance.new("UICorner")
+rejoinCorner.CornerRadius = UDim.new(0, 6)
+rejoinCorner.Parent = rejoinBtn
+
+rejoinBtn.MouseButton1Click:Connect(function()
+    sendNotification("🔄 Rejoining...", "Reconnecting...")
+    pcall(function()
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end)
+end)
+
+local copyJobBtn = Instance.new("TextButton")
+copyJobBtn.Size = UDim2.new(1, -10, 0, 32)
+copyJobBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+copyJobBtn.Text = "📋 Copy Server JobID"
+copyJobBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+copyJobBtn.Font = Enum.Font.GothamSemibold
+copyJobBtn.TextSize = 11
+copyJobBtn.Parent = ServerContainer
+
+local copyJobCorner = Instance.new("UICorner")
+copyJobCorner.CornerRadius = UDim.new(0, 6)
+copyJobCorner.Parent = copyJobBtn
+
+copyJobBtn.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard(game.JobId)
+        sendNotification("📋 Copied!", "JobID copied to clipboard.")
+    end
+end)
+
 createToggleRow(PvpContainer, "Aimbot Nearest", false, function(enabled)
     aimbotNearestEnabled = enabled
-    if enabled then sendNotification("🎯 Aimbot", "Activated!") end
 end)
 
 createToggleRow(PvpContainer, "Ignore Mobs", false, function(enabled)
@@ -419,147 +665,60 @@ end)
 
 createToggleRow(PvpContainer, "Kill Aura (No Anim)", false, function(enabled)
     killAuraEnabled = enabled
-    if enabled then sendNotification("⚡ Kill Aura", "Active (50m Range)") end
 end)
 
-createToggleRow(FarmContainer, "Auto Level Farm", false, function(enabled)
-    autoFarmEnabled = enabled
-    if enabled then sendNotification("⚔️ Auto Farm", "Level Farm Activated!") end
-end)
+local netFolder = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:FindFirstChild("Net") or ReplicatedStorage
 
-createToggleRow(FarmContainer, "Bring Mob (300m)", false, function(enabled)
-    bringMobEnabled = enabled
-    if enabled then sendNotification("📌 Bring Mob", "Activated!") end
-end)
+local function triggerAdvancedAttack(equippedTool, targetPart)
+    pcall(function()
+        equippedTool:Activate()
 
-createToggleRow(FarmContainer, "Auto Accept Quest", false, function(enabled)
-    autoQuestEnabled = enabled
-end)
-
-createToggleRow(FarmContainer, "Fast Attack (Hit)", false, function(enabled)
-    fastAttackEnabled = enabled
-    if enabled then sendNotification("⚡ Fast Attack", "Enabled!") end
-end)
-
-local weaponFrame = Instance.new("Frame")
-weaponFrame.Size = UDim2.new(1, -10, 0, 36)
-weaponFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
-weaponFrame.Parent = FarmContainer
-
-local weaponCorner = Instance.new("UICorner")
-weaponCorner.CornerRadius = UDim.new(0, 6)
-weaponCorner.Parent = weaponFrame
-
-local weaponLabel = Instance.new("TextLabel")
-weaponLabel.Size = UDim2.new(0.5, 0, 1, 0)
-weaponLabel.Position = UDim2.new(0, 10, 0, 0)
-weaponLabel.BackgroundTransparency = 1
-weaponLabel.Text = "Select Weapon"
-weaponLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-weaponLabel.Font = Enum.Font.GothamSemibold
-weaponLabel.TextSize = 11
-weaponLabel.TextXAlignment = Enum.TextXAlignment.Left
-weaponLabel.Parent = weaponFrame
-
-local weaponBtn = Instance.new("TextButton")
-weaponBtn.Size = UDim2.new(0.4, 0, 0.65, 0)
-weaponBtn.Position = UDim2.new(0.56, 0, 0.175, 0)
-weaponBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-weaponBtn.Text = "Melee"
-weaponBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-weaponBtn.Font = Enum.Font.GothamBold
-weaponBtn.TextSize = 10
-weaponBtn.Parent = weaponFrame
-
-local weaponBtnCorner = Instance.new("UICorner")
-weaponBtnCorner.CornerRadius = UDim.new(0, 5)
-weaponBtnCorner.Parent = weaponBtn
-
-weaponBtn.MouseButton1Click:Connect(function()
-    if selectWeaponType == "Melee" then
-        selectWeaponType = "Sword"
-        weaponBtn.Text = "Sword"
-        weaponBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-    elseif selectWeaponType == "Sword" then
-        selectWeaponType = "Blox Fruit"
-        weaponBtn.Text = "Blox Fruit"
-        weaponBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 255)
-    else
-        selectWeaponType = "Melee"
-        weaponBtn.Text = "Melee"
-        weaponBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    end
-end)
-
-local function equipSelectedWeapon()
-    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-    local char = LocalPlayer.Character
-    if not backpack or not char then return end
-
-    for _, tool in ipairs(backpack:GetChildren()) do
-        if tool:IsA("Tool") then
-            if selectWeaponType == "Melee" and (tool.ToolTip == "Melee" or string.find(tool.Name, "Combat") or string.find(tool.Name, "Step") or string.find(tool.Name, "Claw") or string.find(tool.Name, "Talon") or string.find(tool.Name, "Human") or string.find(tool.Name, "Superhuman") or string.find(tool.Name, "Godhuman")) then
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                if hum then hum:EquipTool(tool) end
-                break
-            elseif selectWeaponType == "Sword" and tool.ToolTip == "Sword" then
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                if hum then hum:EquipTool(tool) end
-                break
-            elseif selectWeaponType == "Blox Fruit" and tool.ToolTip == "Blox Fruit" then
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                if hum then hum:EquipTool(tool) end
-                break
-            end
+        local registerAttack = netFolder:FindFirstChild("RegisterAttack") or netFolder:FindFirstChild("CommF_")
+        if registerAttack and registerAttack:IsA("RemoteEvent") then
+            registerAttack:FireServer()
         end
-    end
+
+        local validatorRemote = netFolder:FindFirstChild("Validator") or netFolder:FindFirstChild("Validator2") or ReplicatedStorage:FindFirstChild("Validator", true)
+        if validatorRemote and validatorRemote:IsA("RemoteEvent") then
+            validatorRemote:FireServer(equippedTool.Name, targetPart)
+        end
+    end)
 end
 
 task.spawn(function()
-    while task.wait(0.5) do
-        if autoFarmEnabled then
-            pcall(equipSelectedWeapon)
-        end
-    end
-end)
-
--- Kill Aura Loop (M1 Attack Only, No Animation, 50m Range)
-task.spawn(function()
-    while task.wait(0.1) do
+    while task.wait(0.12) do
         if killAuraEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             pcall(function()
                 local char = LocalPlayer.Character
                 local hrp = char.HumanoidRootPart
                 local equippedTool = char:FindFirstChildOfClass("Tool")
-
-                -- Only proceed if a weapon is actually equipped
+                
                 if equippedTool then
                     local function checkAndAttack(targetHRP)
-                        local dist = (hrp.Position - targetHRP.Position).Magnitude
-                        if dist <= 50 then
-                            equippedTool:Activate()
+                        if (hrp.Position - targetHRP.Position).Magnitude <= 50 then
+                            triggerAdvancedAttack(equippedTool, targetHRP)
                         end
                     end
-
+                    
                     if not ignorePlayersEnabled then
                         for _, player in ipairs(Players:GetPlayers()) do
                             if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                                 local pHum = player.Character:FindFirstChildOfClass("Humanoid")
-                                if pHum and pHum.Health > 0 then
-                                    checkAndAttack(player.Character.HumanoidRootPart)
+                                if pHum and pHum.Health > 0 then 
+                                    checkAndAttack(player.Character.HumanoidRootPart) 
                                 end
                             end
                         end
                     end
-
+                    
                     if not ignoreMobsEnabled then
                         local enemiesFolder = Workspace:FindFirstChild("Enemies")
                         if enemiesFolder then
                             for _, enemy in ipairs(enemiesFolder:GetChildren()) do
                                 local eHRP = enemy:FindFirstChild("HumanoidRootPart")
                                 local eHum = enemy:FindFirstChildOfClass("Humanoid")
-                                if eHRP and eHum and eHum.Health > 0 then
-                                    checkAndAttack(eHRP)
+                                if eHRP and eHum and eHum.Health > 0 then 
+                                    checkAndAttack(eHRP) 
                                 end
                             end
                         end
@@ -569,8 +728,9 @@ task.spawn(function()
         end
     end
 end)
-
--- Original Simple Aimbot Engine
+-- ==========================================
+-- MD GAMER SCRIPT (Part 3 - PVP Engine & Fly)
+-- ==========================================
 RunService.RenderStepped:Connect(function()
     if aimbotNearestEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         pcall(function()
@@ -615,45 +775,6 @@ RunService.RenderStepped:Connect(function()
                 hrp.CFrame = CFrame.new(hrp.Position, targetPos)
             end
         end)
-    end
-end)
--- MD GAMER SCRIPT (Part 3 - Complete Execution)
-task.spawn(function()
-    while task.wait(0.2) do
-        if fastAttackEnabled then
-            pcall(function()
-                local vim = game:GetService("VirtualInputManager")
-                vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-            end)
-        end
-    end
-end)
-
-task.spawn(function()
-    while task.wait(0.15) do
-        if bringMobEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            pcall(function()
-                local hrp = LocalPlayer.Character.HumanoidRootPart
-                local enemiesFolder = Workspace:FindFirstChild("Enemies")
-                if enemiesFolder then
-                    for _, enemy in ipairs(enemiesFolder:GetChildren()) do
-                        local eHRP = enemy:FindFirstChild("HumanoidRootPart")
-                        local eHum = enemy:FindFirstChildOfClass("Humanoid")
-                        if eHRP and eHum and eHum.Health > 0 then
-                            local dist = (hrp.Position - eHRP.Position).Magnitude
-                            if dist <= 300 then
-                                eHRP.CFrame = hrp.CFrame * CFrame.new(0, 0, -3)
-                                eHRP.Velocity = Vector3.new(0, 0, 0)
-                                if enemy:FindFirstChild("Head") then
-                                    enemy.Head.CanCollide = false
-                                end
-                            end
-                        end
-                    end
-                end
-            end)
-        end
     end
 end)
 
@@ -710,180 +831,6 @@ Workspace.DescendantAdded:Connect(function(v)
     end
 end)
 
-local function createFruitLabel(text, isHeader)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -10, 0, isHeader and 26 or 22)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = text
-    lbl.TextColor3 = isHeader and Color3.fromRGB(0, 255, 200) or Color3.fromRGB(220, 220, 220)
-    lbl.Font = isHeader and Enum.Font.GothamBold or Enum.Font.GothamSemibold
-    lbl.TextSize = isHeader and 12 or 11
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = FruitContainer
-end
-
-local function loadRealTimeDealerStock()
-    for _, child in ipairs(FruitContainer:GetChildren()) do
-        if child:IsA("TextLabel") then
-            child:Destroy()
-        end
-    end
-
-    createFruitLabel("⭐ Advance Fruit Stock (Available)", true)
-
-    local success, res = pcall(function()
-        return ReplicatedStorage.Remotes.CommF_:InvokeServer("GetFruits")
-    end)
-
-    local count = 1
-    if success and type(res) == "table" then
-        local function displayAvailableCategory(stockTable)
-            if stockTable and type(stockTable) == "table" then
-                for _, fruitData in ipairs(stockTable) do
-                    local fName, fPrice = "", ""
-                    if type(fruitData) == "table" then
-                        fName = tostring(fruitData.Name or fruitData[1] or "")
-                        fPrice = tostring(fruitData.Price or fruitData[2] or "")
-                    else
-                        fName = tostring(fruitData)
-                    end
-                    if fName ~= "" and fName ~= "nil" then
-                        local displayStr = fPrice ~= "" and string.format("   • %s - $%s", fName, fPrice) or string.format("   • %s", fName)
-                        createFruitLabel(displayStr, false)
-                        count = count + 1
-                    end
-                end
-            end
-        end
-
-        displayAvailableCategory(res.AdvancedStock or res.Advanced or res.AdvStock)
-        
-        createFruitLabel("📦 Normal Fruit Stock (Available)", true)
-        count = count + 1
-        
-        displayAvailableCategory(res.NormalStock or res.Normal or res.StandardStock)
-    else
-        createFruitLabel("   • Failed to fetch live stock!", false)
-        count = count + 1
-    end
-
-    FruitContainer.CanvasSize = UDim2.new(0, 0, 0, count * 24)
-end
-
-TabFruitBtn.MouseButton1Click:Connect(function()
-    resetTabs()
-    FruitContainer.Visible = true
-    TabFruitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    TabFruitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    loadRealTimeDealerStock()
-end)
-
-local jobFrame = Instance.new("Frame")
-jobFrame.Size = UDim2.new(1, -10, 0, 85)
-jobFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
-jobFrame.Parent = ServerContainer
-
-local jobCorner = Instance.new("UICorner")
-jobCorner.CornerRadius = UDim.new(0, 6)
-jobCorner.Parent = jobFrame
-
-local jobTitle = Instance.new("TextLabel")
-jobTitle.Size = UDim2.new(1, -10, 0, 22)
-jobTitle.Position = UDim2.new(0, 8, 0, 4)
-jobTitle.BackgroundTransparency = 1
-jobTitle.Text = "Server Travel [JobID]"
-jobTitle.TextColor3 = Color3.fromRGB(0, 255, 200)
-jobTitle.Font = Enum.Font.GothamBold
-jobTitle.TextSize = 11
-jobTitle.TextXAlignment = Enum.TextXAlignment.Left
-jobTitle.Parent = jobFrame
-
-local jobInputBox = Instance.new("TextBox")
-jobInputBox.Size = UDim2.new(1, -16, 0, 28)
-jobInputBox.Position = UDim2.new(0, 8, 0, 28)
-jobInputBox.BackgroundColor3 = Color3.fromRGB(15, 15, 24)
-jobInputBox.PlaceholderText = "Paste JobID Here..."
-jobInputBox.Text = ""
-jobInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-jobInputBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 150)
-jobInputBox.Font = Enum.Font.Gotham
-jobInputBox.TextSize = 11
-jobInputBox.Parent = jobFrame
-
-local jobInputCorner = Instance.new("UICorner")
-jobInputCorner.CornerRadius = UDim.new(0, 4)
-jobInputCorner.Parent = jobInputBox
-
-local clearBtn = Instance.new("TextButton")
-clearBtn.Size = UDim2.new(0.46, 0, 0, 22)
-clearBtn.Position = UDim2.new(0, 8, 0, 60)
-clearBtn.BackgroundColor3 = Color3.fromRGB(60, 40, 60)
-clearBtn.Text = "Clear"
-clearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-clearBtn.Font = Enum.Font.GothamBold
-clearBtn.TextSize = 10
-clearBtn.Parent = jobFrame
-
-local clearCorner = Instance.new("UICorner")
-clearCorner.CornerRadius = UDim.new(0, 4)
-clearCorner.Parent = clearBtn
-
-local confirmBtn = Instance.new("TextButton")
-confirmBtn.Size = UDim2.new(0.46, 0, 0, 22)
-confirmBtn.Position = UDim2.new(0.52, 0, 0, 60)
-confirmBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-confirmBtn.Text = "Confirm (TP)"
-confirmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-confirmBtn.Font = Enum.Font.GothamBold
-confirmBtn.TextSize = 10
-confirmBtn.Parent = jobFrame
-
-local confirmCorner = Instance.new("UICorner")
-confirmCorner.CornerRadius = UDim.new(0, 4)
-confirmCorner.Parent = confirmBtn
-
-clearBtn.MouseButton1Click:Connect(function()
-    jobInputBox.Text = ""
-    sendNotification("🌐 Server Travel", "JobID Cleared!")
-end)
-
-confirmBtn.MouseButton1Click:Connect(function()
-    local targetJobID = jobInputBox.Text
-    if targetJobID and targetJobID ~= "" then
-        sendNotification("🌐 Connecting...", "Teleporting to Server JobID...")
-        pcall(function()
-            TeleportService:TeleportToPlaceInstance(game.PlaceId, targetJobID, LocalPlayer)
-        end)
-    else
-        sendNotification("⚠️ Error", "Please enter a valid JobID!")
-    end
-end)
-
-local copyJobBtn = Instance.new("TextButton")
-copyJobBtn.Size = UDim2.new(1, -10, 0, 32)
-copyJobBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
-copyJobBtn.Text = "  📋 Copy Current Job ID"
-copyJobBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
-copyJobBtn.Font = Enum.Font.GothamSemibold
-copyJobBtn.TextSize = 11
-copyJobBtn.TextXAlignment = Enum.TextXAlignment.Left
-copyJobBtn.Parent = ServerContainer
-
-local copyJobCorner = Instance.new("UICorner")
-copyJobCorner.CornerRadius = UDim.new(0, 6)
-copyJobCorner.Parent = copyJobBtn
-
-copyJobBtn.MouseButton1Click:Connect(function()
-    if setclipboard then
-        setclipboard(game.JobId)
-        sendNotification("📋 Copied!", "Current Server JobID copied to clipboard.")
-    else
-        sendNotification("⚠️ Error", "Clipboard not supported by executor!")
-    end
-end)
-
-ServerContainer.CanvasSize = UDim2.new(0, 0, 0, 130)
-
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
@@ -920,7 +867,7 @@ local function flyTo(targetCFrame)
 end
 
 local seaIslands = {
-    [2753915549] = {
+    [2753915549] = { -- First Sea
         ["Starter Island"] = Vector3.new(1090, 16, 1400),
         ["Jungle"] = Vector3.new(-1240, 12, 380),
         ["Pirate Village"] = Vector3.new(-1120, 4, 3850),
@@ -935,7 +882,7 @@ local seaIslands = {
         ["Underwater City"] = Vector3.new(3860, 5, -1920),
         ["Fountain City"] = Vector3.new(5120, 4, 4100)
     },
-    [4442272183] = {
+    [4442272183] = { -- Second Sea
         ["Cafe"] = Vector3.new(-380, 73, 300),
         ["Kingdom of Rose"] = Vector3.new(-450, 73, 1500),
         ["Ushapp's Island"] = Vector3.new(4800, 8, 2800),
@@ -947,7 +894,7 @@ local seaIslands = {
         ["Ice Castle"] = Vector3.new(5500, 28, -6200),
         ["Forgotten Island"] = Vector3.new(-3050, 235, -10150)
     },
-    [7449423635] = {
+    [7449423635] = { -- Third Sea
         ["Port Town"] = Vector3.new(-2900, 15, 5300),
         ["Great Tree"] = Vector3.new(2250, 25, -7200),
         ["Floating Turtle"] = Vector3.new(-13200, 330, -7600),
@@ -959,38 +906,68 @@ local seaIslands = {
     }
 }
 
-local currentSeaIslands = seaIslands[game.PlaceId] or seaIslands[2753915549]
-local totalIslands = 0
+-- Dynamic Island Loader Function
+local function loadIslandButtons()
+    -- Clear previous island buttons
+    for _, child in ipairs(IslandContainer:GetChildren()) do
+        if not child:IsA("UIListLayout") then
+            child:Destroy()
+        end
+    end
 
-for islandName, pos in pairs(currentSeaIslands) do
-    totalIslands = totalIslands + 1
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -10, 0, 32)
-    btn.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
-    btn.Text = "  📍 " .. islandName
-    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 11
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.Parent = IslandContainer
+    -- Top Refresh Button
+    local refreshBtn = Instance.new("TextButton")
+    refreshBtn.Size = UDim2.new(1, -10, 0, 34)
+    refreshBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    refreshBtn.Text = "🔄 REFRESH ISLANDS MAP"
+    refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    refreshBtn.Font = Enum.Font.GothamBold
+    refreshBtn.TextSize = 11
+    refreshBtn.Parent = IslandContainer
 
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 6)
-    btnCorner.Parent = btn
+    local refreshCorner = Instance.new("UICorner")
+    refreshCorner.CornerRadius = UDim.new(0, 6)
+    refreshCorner.Parent = refreshBtn
 
-    btn.MouseButton1Click:Connect(function()
-        sendNotification("🏝️ Flying...", islandName)
-        flyTo(CFrame.new(pos))
+    refreshBtn.MouseButton1Click:Connect(function()
+        loadIslandButtons()
+        sendNotification("🏝️ Map Refreshed", "Loaded islands for current Sea!")
     end)
+
+    local currentSeaIslands = seaIslands[game.PlaceId] or seaIslands[2753915549]
+    local totalIslands = 1
+
+    for islandName, pos in pairs(currentSeaIslands) do
+        totalIslands = totalIslands + 1
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, -10, 0, 32)
+        btn.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+        btn.Text = "  📍 " .. islandName
+        btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+        btn.Font = Enum.Font.GothamSemibold
+        btn.TextSize = 11
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.Parent = IslandContainer
+
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 6)
+        btnCorner.Parent = btn
+
+        btn.MouseButton1Click:Connect(function()
+            sendNotification("🏝️ Flying...", islandName)
+            flyTo(CFrame.new(pos))
+        end)
+    end
+
+    IslandContainer.CanvasSize = UDim2.new(0, 0, 0, totalIslands * 38)
 end
 
-IslandContainer.CanvasSize = UDim2.new(0, 0, 0, totalIslands * 38)
+-- Initial Load
+loadIslandButtons()
 
-local function isFruit(obj)
-    if not (obj:IsA("Tool") or string.find(obj.Name, "Fruit")) then return false end
-    return (obj:FindFirstChild("Handle") or obj:FindFirstChildOfClass("BasePart")) ~= nil
-end
-
+-- ==========================================
+-- MD GAMER SCRIPT (Part 4 - ESP & Main Engine)
+-- ==========================================
 local function checkFruitsForNotification(isNewSpawn)
     for _, obj in ipairs(Workspace:GetChildren()) do
         if isFruit(obj) and not notifiedFruits[obj] then
